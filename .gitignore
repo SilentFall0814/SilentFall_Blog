@@ -1,0 +1,58 @@
+# 依赖
+node_modules/
+.pnp/
+.pnp.*
+.yarn/
+
+# Next.js 构建产物
+.next/
+out/
+
+# 生产构建
+build/
+
+# 环境变量
+.env*
+.env.local
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.pem
+
+# 调试日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Python 虚拟环境
+venv/
+.venv/
+env/
+
+# 上传文件（可能包含大文件）
+uploads/
+
+# 部署配置中的本地路径
+# deploy_config.json 包含本地绝对路径，不应提交
