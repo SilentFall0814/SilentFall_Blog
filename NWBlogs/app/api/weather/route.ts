@@ -25,12 +25,11 @@ export async function GET() {
       const res = await fetch(url, {
         method: 'GET',
         headers: {
-          // 🌟 按照文档要求的 Header 认证格式
           'Authorization': `Bearer ${token}`,
           'Accept-Encoding': 'gzip',
           'User-Agent': 'Vercel-Weather-Proxy/1.0'
         },
-        cache: 'no-store'
+        next: { revalidate: 300 }
       });
 
       const data = await res.json();

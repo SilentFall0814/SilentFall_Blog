@@ -8,7 +8,7 @@ router = APIRouter()
 CURRENT_API_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_API_DIR, "..", ".."))
 
-SYNC_DIRS = ["posts", "chatters", "moments", "public/uploads"]
+SYNC_DIRS = ["posts", "moments", "milestones", "public/uploads"]
 SYNC_FILES = [
     "app/about/about.md",
     "data/albums.ts",

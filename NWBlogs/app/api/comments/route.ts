@@ -8,9 +8,15 @@ export async function GET(req: NextRequest) {
     const page_id = searchParams.get('page_id') || '';
     const status = searchParams.get('status') || 'approved';
     const qs = new URLSearchParams({ page_id, status }).toString();
-    const res = await fetch(`${BACKEND_URL}/api/comments/list?${qs}`, { cache: 'no-store' });
+    const res = await fetch(`${BACKEND_URL}/api/comments/list?${qs}`, {
+      next: { revalidate: 30 }
+    });
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+      },
+    });
   } catch (error) {
     console.error('评论列表代理失败:', error);
     return NextResponse.json({ success: false, data: [] }, { status: 500 });

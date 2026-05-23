@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // 定义操作的类型
-export type OperationType = 'POST' | 'CHATTER' | 'CONFIG' | 'GALLERY' | 'FRIEND';
+export type OperationType = 'POST' | 'CONFIG' | 'GALLERY' | 'FRIEND';
 
 export interface Operation {
   id: string;

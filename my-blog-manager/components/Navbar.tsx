@@ -60,10 +60,12 @@ export default function Navbar() {
     { name: '照片墙', href: '/photowall' },
     { name: '音乐', href: '/music' },
     { name: '说说', href: '/moments' },
-    { name: '杂谈', href: '/chatter' },
+    { name: '文章', href: '/posts' },
     { name: '📝 草稿箱', href: '/drafts' },
     { name: '友链', href: '/friends' },
     { name: '关于', href: '/about' },
+    { name: '审核区', href: '/admin/review' },
+    { name: '监控', href: '/admin/analytics' },
     { name: '⚙️ 设置', href: '/settings' },
   ];
 
@@ -125,7 +127,7 @@ export default function Navbar() {
               break;
             default:
               apiUrl = `${apiBase}/api/drafts/sync_local`;
-              body = { operations: [op] };
+              body = { operations: [{ type: op.type, payload: op.payload || op.value }] };
               break;
           }
 

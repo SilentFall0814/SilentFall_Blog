@@ -35,7 +35,7 @@ export default function LatestChatterCarousel({ chatters }: { chatters: any[] })
 
   return (
     <div className="w-full h-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl overflow-hidden relative group min-h-[220px] flex flex-col">
-      <Link href={currentChatter.slug === 'none' ? '/chatter' : `/chatter/${currentChatter.slug}`} className="absolute inset-0 z-20" aria-label={`查看杂谈: ${currentChatter.title}`} />
+      <Link href={currentChatter.slug === 'none' ? '/moments' : `/moments`} className="absolute inset-0 z-20" aria-label={`查看说说: ${currentChatter.title}`} />
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -55,7 +55,7 @@ export default function LatestChatterCarousel({ chatters }: { chatters: any[] })
       <div className="relative z-10 flex flex-col justify-center p-6 md:p-8 h-full pointer-events-none w-full md:w-[85%]">
         <div className="flex items-end gap-2 mb-2">
           <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-black/30 backdrop-blur-sm px-2 py-1 rounded-md border border-white/10 shadow-sm">
-            Records
+            最新说说
           </span>
           {currentChatter.formattedDate && (
             <span className="text-[11px] font-mono text-slate-300 drop-shadow-md">

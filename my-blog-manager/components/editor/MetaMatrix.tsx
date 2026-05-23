@@ -4,7 +4,7 @@ import React, { useState, KeyboardEvent } from 'react';
 import { ImageIcon, Tag, FileText, X, Clock, CloudUpload, Smile, Save, Send } from 'lucide-react';
 
 interface Props {
-  type: 'post' | 'chatter' | 'about';
+  type: 'post' | 'about';
   tags: string[]; setTags: React.Dispatch<React.SetStateAction<string[]>>;
   cover: string; setCover: (val: string) => void;
   summary: string; setSummary: (val: string) => void;
@@ -24,7 +24,7 @@ export default function MetaMatrix({
   allHistoryPostTags, allHistoryChatterTags, isLoadingTags, allHistoryMoods, onSave, isSaving, lastSaved, onOpenImageTool
 }: Props) {
   const [tagInput, setTagInput] = useState('');
-  const currentHistoryTags = type === 'chatter' ? allHistoryChatterTags : allHistoryPostTags;
+  const currentHistoryTags = allHistoryPostTags;
 
   const handleAddTag = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim() !== '') {
@@ -113,7 +113,7 @@ export default function MetaMatrix({
         )}
 
         {/* 3. 心情区 */}
-        {type === 'chatter' && setMood && (
+        {type !== 'about' && setMood && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom duration-700">
             <Label icon={Smile} text="Mood Today" color="border-yellow-500" />
             <input

@@ -4,12 +4,21 @@
 
 > 🙏 **致谢**：本项目由 [XHBlogs](https://github.com/heiehiehi/XinghuisamaBlogs) 二改而来，感谢原作者 [heiehiehi](https://github.com/heiehiehi) 的优秀作品。
 
+## 页面预览
+
+<div align="center">
+  <img src="./Screenshot/1.png" alt="首页预览" width="45%" />
+  <img src="./Screenshot/2.png" alt="文章列表预览" width="45%" />
+</div>
+<div align="center">
+  <img src="./Screenshot/3.png" alt="文章详情预览" width="45%" />
+</div>
+
 ## 核心功能
 
 ### 📝 内容管理
 
-- **文章**：Markdown 写作，支持代码高亮、数学公式（KaTeX）、目录导航
-- **杂谈**：短内容发布，支持封面图和摘要
+- **文章**：Markdown 写作，支持代码高亮（One Dark 主题）、数学公式（KaTeX）、目录导航（TOC）
 - **说说**：博主说说（Markdown 文件）+ 访客说说（MongoDB）混合展示，按时间排序
 - **草稿**：后台草稿箱，暂存未发布内容
 - **操作暂存区**：修改设置 → 暂存到操作队列 → 更新本地 → 同步 Blog
@@ -32,7 +41,6 @@
 - 博主在后台审核面板中可**通过/拒绝/删除**
 - 审核通过后在前台说说列表中与博主说说混合展示
 - 访客说说带有"访客"标识，与博主说说区分
-- 后台说说页面同步展示访客说说，支持独立删除
 
 ### 🎨 主题系统
 
@@ -73,8 +81,21 @@
 - **时间线**：建站历程
 - **天气组件**：实时天气显示
 - **全局工具箱**：计算器等小工具
-- **搜索功能**：文章搜索
+- **搜索功能**：文章搜索（防抖优化）
 - **点击特效**：互动反馈
+
+## 性能优化
+
+本项目已实施以下性能优化措施：
+
+| 优化类别 | 具体措施 |
+|----------|----------|
+| 代码分割 | 12+ 个重型组件（粒子特效、弹幕、播放器、轮播等）使用 `next/dynamic` 懒加载 |
+| 渲染优化 | `React.memo` 包裹列表项、`requestAnimationFrame` 滚动节流、搜索防抖 |
+| 请求优化 | 评论 API 30s 缓存 + `stale-while-revalidate`、天气 API 5 分钟缓存 |
+| ISR 增量更新 | 首页/列表页 10 分钟、文章详情/时间线 1 小时自动重新生成 |
+| 传输优化 | Gzip 压缩、静态资源 1 年强缓存、DNS 预解析 |
+| 图片优化 | 文章卡片和评论头像 `loading="lazy"` 懒加载 |
 
 ## 项目结构
 
@@ -88,70 +109,74 @@ NoWin_Blog/
 │   │   │   ├── comments/     # 评论接口
 │   │   │   ├── guest-moments/# 访客说说接口
 │   │   │   └── weather/      # 天气接口
-│   │   ├── chatter/          # 云端杂谈
 │   │   ├── friends/          # 友链
 │   │   ├── moments/          # 说说（博主 + 访客混合展示）
 │   │   ├── music/            # 音乐
 │   │   ├── photowall/        # 照片墙
-│   │   ├── posts/            # 文章
+│   │   ├── posts/            # 文章（列表 + 详情）
 │   │   ├── projects/         # 项目
 │   │   └── timeline/         # 时间线
 │   ├── components/           # UI 组件
+│   │   ├── DynamicImports.tsx       # 全局重型组件懒加载入口
+│   │   ├── HomeDynamicImports.tsx   # 首页重型组件懒加载入口
+│   │   ├── DynamicComments.tsx      # 评论组件懒加载入口
+│   │   ├── PostsBoard.tsx           # 文章列表（memo 优化）
+│   │   ├── Comments.tsx             # 评论系统（memo 优化）
+│   │   ├── ClientTOC.tsx            # 目录导航（rAF 节流）
+│   │   ├── SearchBar.tsx            # 搜索框（防抖优化）
 │   │   ├── VisitorMomentEditor.tsx  # 访客说说富文本编辑器
-│   │   ├── Comments.tsx      # 评论系统
-│   │   ├── MomentComments.tsx # 说说评论
-│   │   ├── ThemeProvider.tsx  # 主题切换（默认日间模式）
-│   │   ├── CyberCat.tsx      # AI 猫猫助理
-│   │   ├── CloudPlayer.tsx   # 网易云音乐播放器
-│   │   ├── WeatherWidget.tsx # 天气组件
-│   │   ├── DanmakuBackground.tsx # 弹幕背景
-│   │   └── ...               # 其他 UI 组件
+│   │   ├── ThemeProvider.tsx        # 主题切换（默认日间模式）
+│   │   ├── CyberCat.tsx             # AI 猫猫助理
+│   │   ├── CloudPlayer.tsx          # 网易云音乐播放器
+│   │   ├── WeatherWidget.tsx        # 天气组件
+│   │   ├── DanmakuBackground.tsx    # 弹幕背景
+│   │   └── ...                      # 其他 UI 组件
 │   ├── data/                 # 数据文件（友链、图库、项目）
+│   ├── posts/                # 文章 Markdown 文件
 │   ├── siteConfig.ts         # 站点配置
 │   ├── deploy.sh             # Linux 服务器一键部署脚本
-│   └── next.config.ts        # Next.js 配置（standalone 输出）
+│   └── next.config.ts        # Next.js 配置（standalone + 压缩 + 缓存头）
 │
-└── my-blog-manager/          # 后台管理器（Next.js 16 + Python FastAPI）
-    ├── app/                  # 管理页面
-    │   ├── admin/            # 管理面板
-    │   ├── api/              # API 代理层
-    │   │   ├── chat/         # AI 猫猫助理
-    │   │   ├── comments/     # 评论管理接口
-    │   │   └── guest-moments/# 访客说说管理接口
-    │   ├── editor/           # 文章/杂谈编辑器
-    │   ├── moments/          # 说说管理（博主 + 访客混合展示）
-    │   ├── settings/         # 设置页面
-    │   │   └── GuestMomentSection.tsx  # 访客说说审核面板
-    │   └── ...               # 其他管理页面
-    ├── components/
-    │   ├── editor/           # 富文本编辑器（Tiptap）
-    │   ├── settings/         # 设置模块
-    │   │   ├── AICatSection.tsx      # AI 猫猫配置
-    │   │   ├── BackgroundSection.tsx # 背景配置
-    │   │   ├── CommentSection.tsx    # 评论管理
-    │   │   ├── GuestMomentSection.tsx # 访客说说审核
-    │   │   ├── MusicSection.tsx      # 音乐配置
-    │   │   ├── ProfileSection.tsx    # 个人资料
-    │   │   └── ...                   # 其他设置模块
-    │   └── ...               # 其他组件
-    ├── cms_core/             # Python 后端核心
-    │   ├── api/              # API 路由
-    │   │   ├── comments.py   # 评论 API
-    │   │   ├── guest_moments.py  # 访客说说 API
-    │   │   ├── config.py     # 配置 API
-    │   │   ├── drafts.py     # 草稿 API
-    │   │   ├── friends.py    # 友链 API
-    │   │   ├── gallery.py    # 图库 API
-    │   │   ├── moments.py    # 说说 API
-    │   │   ├── music.py      # 音乐 API
-    │   │   ├── picbed.py     # 图床 API
-    │   │   ├── projects.py   # 项目 API
-    │   │   └── sync.py       # 同步 API
-    │   ├── database.py       # MongoDB 连接模块
-    │   └── main.py           # FastAPI 入口
-    ├── data/                 # 数据存储
-    │   └── deploy_config.json # 部署配置
-    └── siteConfig.ts         # 管理端站点配置
+├── my-blog-manager/          # 后台管理器（Next.js 16 + Python FastAPI）
+│   ├── app/                  # 管理页面
+│   │   ├── admin/            # 管理面板
+│   │   ├── api/              # API 代理层
+│   │   │   ├── chat/         # AI 猫猫助理
+│   │   │   ├── comments/     # 评论管理接口
+│   │   │   └── guest-moments/# 访客说说管理接口
+│   │   ├── editor/           # 文章编辑器
+│   │   ├── moments/          # 说说管理（博主 + 访客混合展示）
+│   │   ├── posts/            # 文章管理
+│   │   ├── settings/         # 设置页面
+│   │   └── ...               # 其他管理页面
+│   ├── components/
+│   │   ├── editor/           # 富文本编辑器（Tiptap）
+│   │   ├── settings/         # 设置模块
+│   │   └── ...               # 其他组件
+│   ├── cms_core/             # Python 后端核心
+│   │   ├── api/              # API 路由
+│   │   │   ├── comments.py   # 评论 API
+│   │   │   ├── guest_moments.py  # 访客说说 API
+│   │   │   ├── config.py     # 配置 API
+│   │   │   ├── drafts.py     # 草稿 API
+│   │   │   ├── friends.py    # 友链 API
+│   │   │   ├── gallery.py    # 图库 API
+│   │   │   ├── moments.py    # 说说 API
+│   │   │   ├── music.py      # 音乐 API
+│   │   │   ├── picbed.py     # 图床 API
+│   │   │   ├── projects.py   # 项目 API
+│   │   │   └── sync.py       # 同步 API
+│   │   ├── database.py       # MongoDB 连接模块
+│   │   └── main.py           # FastAPI 入口
+│   ├── posts/                # 文章 Markdown 文件（与前端同步）
+│   ├── data/                 # 数据存储
+│   │   └── deploy_config.json # 部署配置
+│   └── siteConfig.ts         # 管理端站点配置
+│
+└── Screenshot/               # 页面截图
+    ├── 1.png
+    ├── 2.png
+    └── 3.png
 ```
 
 ## 技术栈
@@ -259,7 +284,6 @@ npm run dev
 | 数据类型 | 存储方式 | 说明 |
 |----------|----------|------|
 | 博客文章 | Markdown 文件 | `NWBlogs/posts/` 目录 |
-| 杂谈 | Markdown 文件 | `NWBlogs/chatters/` 目录 |
 | 博主说说 | Markdown 文件 | `NWBlogs/moments/` 目录 |
 | 评论 | MongoDB | `comments` 集合 |
 | 访客说说 | MongoDB | `guest_moments` 集合 |

@@ -5,61 +5,134 @@ import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import { siteConfig } from '../../siteConfig';
 import TimelineClient from '../../components/TimelineClient';
+import { projectsData } from '../../data/projects';
+
+export const metadata = {
+  title: "归档 | NoWin の 博客",
+  description: "归档与探索，记录每一篇文章、项目与瞬间",
+};
+
+interface TimelineItem {
+  id: string;
+  type: 'post' | 'project' | 'moment';
+  title: string;
+  rawTitle: string;
+  date: string;
+  description: string;
+  cover: string;
+  tags: string[];
+  href: string;
+}
 
 export default function Timeline() {
-  const postsDirectory = path.join(process.cwd(), 'posts');
-  let posts: any[] = [];
-  let tagCounts: Record<string, number> = {};
+  const items: TimelineItem[] = [];
+  const seenIds = new Set<string>();
 
-  try {
-    if (fs.existsSync(postsDirectory)) {
-      const fileNames = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md'));
-
-      fileNames.forEach(fileName => {
-        const slug = fileName.replace(/\.md$/, '');
-        const fullPath = path.join(postsDirectory, fileName);
-
-        // 🌟 核心清理：不再读取物理状态 (stats)，彻底抛弃 mtime
-        const fileContents = fs.readFileSync(fullPath, 'utf8');
-        const { data } = matter(fileContents);
-
-        const postTags = data.tags && Array.isArray(data.tags) ? data.tags : ['未分类'];
-
-        postTags.forEach(tag => {
-          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-        });
-
-        posts.push({
-          slug,
-          title: data.title || '无标题',
-          date: data.date || '1970-01-01',
-          description: data.description || '',
-          tags: postTags,
-          cover: data.cover || siteConfig.defaultPostCover,
-          // 删除了坑人的 mtime
-        });
-      });
-
-      // 🌟 核心修复：权重排序 -> YAML 精确日期第一，slug 字母表第二
-      posts.sort((a, b) => {
-        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-        // 如果两篇文章的日期和时分秒完全一样，按文件名排序兜底，确保在任何服务器上顺序一致
-        return dateDiff !== 0 ? dateDiff : b.slug.localeCompare(a.slug);
-      });
+  function addUnique(item: TimelineItem) {
+    if (!seenIds.has(item.id)) {
+      seenIds.add(item.id);
+      items.push(item);
     }
-  } catch(e) {
-    console.error("读取文章列表失败", e);
   }
 
-  const tagsArray = Object.keys(tagCounts)
-    .map(name => ({ name, count: tagCounts[name] }))
-    .sort((a, b) => b.count - a.count);
+  // 读取文章数据（chatters 目录）
+  const chattersDirectory = path.join(process.cwd(), 'posts');
+  try {
+    if (fs.existsSync(chattersDirectory)) {
+      const fileNames = fs.readdirSync(chattersDirectory).filter(f => f.endsWith('.md'));
+      fileNames.forEach(fileName => {
+        const slug = fileName.replace(/\.md$/, '');
+        const fullPath = path.join(chattersDirectory, fileName);
+        const fileContents = fs.readFileSync(fullPath, 'utf8');
+        const { data, content } = matter(fileContents);
+
+        if (!data.title || !data.title.trim() || data.title === '未命名草稿') return;
+
+        addUnique({
+          id: `post-${slug}`,
+          type: 'post',
+          title: `发布文章：${data.title}`,
+          rawTitle: data.title,
+          date: data.date || '',
+          description: data.description || '',
+          cover: data.cover || siteConfig.defaultPostCover,
+          tags: Array.isArray(data.tags) ? data.tags : [],
+          href: `/posts/${slug}`,
+        });
+      });
+    }
+  } catch (e) {
+    console.error("读取文章数据失败", e);
+  }
+
+  // 读取项目数据
+  try {
+    projectsData.forEach(project => {
+      addUnique({
+        id: `project-${project.id}`,
+        type: 'project',
+        title: `新增项目：${project.name}`,
+        rawTitle: project.name,
+        date: project.date || '',
+        description: project.description || '',
+        cover: '',
+        tags: project.tags || [],
+        href: '/projects',
+      });
+    });
+  } catch (e) {
+    console.error("读取项目数据失败", e);
+  }
+
+  // 读取说说数据（检查多个可能的目录）
+  const momentDirs = [
+    path.join(process.cwd(), 'moments'),
+    path.join(process.cwd(), 'posts', 'moments'),
+  ];
+
+  momentDirs.forEach(dir => {
+    try {
+      if (fs.existsSync(dir)) {
+        const fileNames = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+        fileNames.forEach(fileName => {
+          const id = fileName.replace(/\.md$/, '');
+          const fullPath = path.join(dir, fileName);
+          const fileContents = fs.readFileSync(fullPath, 'utf8');
+          const { data, content } = matter(fileContents);
+
+          const textContent = content.trim().replace(/[#*`>\-\[\]()!]/g, '');
+          const summary = textContent.length > 20 ? textContent.slice(0, 20) + '...' : textContent;
+
+          addUnique({
+            id: `moment-${id}`,
+            type: 'moment',
+            title: `发布说说：${summary}`,
+            rawTitle: summary,
+            date: data.date || '',
+            description: textContent.length > 60 ? textContent.slice(0, 60) + '...' : textContent,
+            cover: (Array.isArray(data.images) && data.images.length > 0) ? data.images[0] : '',
+            tags: [],
+            href: '/moments',
+          });
+        });
+      }
+    } catch (e) {
+      console.error("读取说说数据失败", e);
+    }
+  });
+
+  // 排序：按日期倒序，没有日期的排在最后
+  items.sort((a, b) => {
+    const dateA = a.date ? new Date(a.date).getTime() : 0;
+    const dateB = b.date ? new Date(b.date).getTime() : 0;
+    return dateB - dateA;
+  });
 
   return (
     <div className="min-h-screen relative pb-32">
       <Navbar />
       <PageTransition>
-        <TimelineClient posts={posts} tags={tagsArray} />
+        <TimelineClient items={items} />
       </PageTransition>
     </div>
   );

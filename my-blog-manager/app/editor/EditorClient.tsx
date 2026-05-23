@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import RichTextEditor, { RichTextEditorHandle } from '../../components/editor/RichTextEditor';
 import MetaMatrix from '../../components/editor/MetaMatrix';
 import FloatingImageTool from '../../components/editor/FloatingImageTool';
+import { useToast } from '../../components/ToastProvider';
 
 export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: any) {
   const searchParams = useSearchParams();
@@ -21,6 +22,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [isImgToolOpen, setIsImgToolOpen] = useState(false);
+  const { showToast } = useToast();
   const editorRef = useRef<RichTextEditorHandle>(null);
 
   // 【核心修复】：如果是 About 模式，初始化时强制锁定标题
@@ -67,6 +69,11 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
   }, [docId, docType]);
 
   const handleSave = async (isPublish: boolean) => {
+    if (docType !== 'about' && !title.trim()) {
+      showToast('标题不能为空，请输入文章标题', 'error');
+      setIsSaving(false);
+      return;
+    }
     setIsSaving(true);
     const payload = {
       blog_path: blogPath || "[REDACTED_LOCAL_PATH]",

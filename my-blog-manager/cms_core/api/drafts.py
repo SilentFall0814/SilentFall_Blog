@@ -107,8 +107,10 @@ async def get_draft(request: Request):
     target_md = None
     if raw_id == "about" or doc_type == "about":
         target_md = os.path.join(base_dir, "app", "about", "about.md")
+    elif doc_type == "milestone":
+        target_md = os.path.join(base_dir, "milestones", f"{raw_id}.md")
     else:
-        folder = "posts" if doc_type == "post" else "chatters"
+        folder = "posts"
         target_md = os.path.join(base_dir, folder, f"{raw_id}.md")
 
     if target_md and os.path.exists(target_md):
@@ -174,7 +176,7 @@ async def delete_draft(request: Request):
     possible_paths = [
         os.path.join(drafts_dir, f"{raw_id}.json"),
         os.path.join(base_dir, "posts", f"{raw_id}.md"),
-        os.path.join(base_dir, "chatters", f"{raw_id}.md")
+        os.path.join(base_dir, "milestones", f"{raw_id}.md")
     ]
 
     deleted_count = 0
@@ -188,9 +190,7 @@ async def delete_draft(request: Request):
                 try:
                     comments_coll = get_comments_collection()
                     # 同时尝试删除 /posts/ID 和 /chatter/ID 的评论，以绝后患
-                    delete_result = comments_coll.delete_many({
-                        "page_id": {"$in": [f"/posts/{raw_id}", f"/chatter/{raw_id}"]}
-                    })
+                    delete_result = comments_coll.delete_many({"page_id": f"/posts/{raw_id}"})
                     print(f"[评论清理] 已自动删除 {delete_result.deleted_count} 条关联评论 (PageID: {raw_id})")
                 except Exception as ce:
                     print(f"[评论清理失败] {str(ce)}")
@@ -213,9 +213,9 @@ async def sync_local_operations(request: Request):
 
     for op in operations:
         if op.get("type") == "publish_article":
-            data = op.get("value", {})
+            data = op.get("payload") or op.get("value", {})
             doc_type = data.get("type", "post")
-            doc_id = data.get("id", "")
+            doc_id = data.get("id") or ""
 
             final_id = doc_id
             if not final_id or final_id == 'new':
@@ -265,16 +265,18 @@ async def sync_local_operations(request: Request):
 
             if doc_type == "about":
                 save_path = os.path.join(base_dir, "app", "about", "about.md")
+            elif doc_type == "milestone":
+                save_path = os.path.join(base_dir, "milestones", f"{final_id}.md")
             else:
-                folder = "posts" if doc_type == "post" else "chatters"
+                folder = "posts"
                 save_path = os.path.join(base_dir, folder, f"{final_id}.md")
 
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
             with open(save_path, "w", encoding="utf-8") as f:
                 f.write(final_text)
 
-            draft_path = os.path.join(drafts_dir, f"{doc_id}.json")
-            if os.path.exists(draft_path):
+            draft_path = os.path.join(drafts_dir, f"{doc_id}.json") if doc_id else ""
+            if draft_path and os.path.exists(draft_path):
                 try:
                     os.remove(draft_path)
                 except:
@@ -289,8 +291,8 @@ async def sync_local_operations(request: Request):
 async def get_all_historical_tags():
     # 🌟 修复：用 PROJECT_ROOT 替换 os.getcwd()
     base_dir = PROJECT_ROOT
-    scan_dirs = {"post": os.path.join(base_dir, "posts"), "chatter": os.path.join(base_dir, "chatters")}
-    tag_collections = {"post": set(), "chatter": set()}
+    scan_dirs = {"post": os.path.join(base_dir, "posts")}
+    tag_collections = {"post": set()}
     fm_regex = re.compile(r'---\s*\n(.*?)\n---\s*', re.DOTALL)
 
     for doc_type, dir_path in scan_dirs.items():
@@ -308,4 +310,4 @@ async def get_all_historical_tags():
                 except:
                     continue
     return {"success": True, "postTags": sorted(list(tag_collections["post"])),
-            "chatterTags": sorted(list(tag_collections["chatter"]))}
+            "chatterTags": []}

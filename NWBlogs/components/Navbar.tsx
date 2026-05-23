@@ -58,14 +58,21 @@ export default function Navbar() {
 
   // 控制 PC 端导航栏
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        setShowNav(false);
-      } else {
-        setShowNav(true);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          if (currentScrollY > lastScrollY && currentScrollY > 80) {
+            setShowNav(false);
+          } else {
+            setShowNav(true);
+          }
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
       }
-      setLastScrollY(currentScrollY);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -78,7 +85,7 @@ export default function Navbar() {
     { name: '照片墙', href: '/photowall' },
     { name: '音乐', href: '/music' },
     { name: '说说', href: '/moments' },
-    { name: '杂谈', href: '/chatter' },
+    { name: '文章', href: '/posts' },
     { name: '友链', href: '/friends' },
     { name: '关于', href: '/about' },
   ];

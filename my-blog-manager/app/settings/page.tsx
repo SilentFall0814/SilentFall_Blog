@@ -17,7 +17,6 @@ import CommentSection from '../../components/settings/CommentSection';
 import GuestMomentSection from '../../components/settings/GuestMomentSection';
 import DanmakuSection from '../../components/settings/DanmakuSection';
 import FooterSection from '../../components/settings/FooterSection';
-import AICatSection from '../../components/settings/AICatSection';
 
 function SettingsContent() {
   const { operations, addOperation } = useOperations();
@@ -45,12 +44,6 @@ function SettingsContent() {
     picBedName: siteConfig.picBedName || "",
     picBedUrl: siteConfig.picBedUrl || "",
     picBedToken: siteConfig.picBedToken || "",
-    geminiConfig: siteConfig.geminiConfig || {
-      modelId: 'gemini-2.5-flash-lite',
-      systemPrompt: '',
-      maxOutputTokens: 150,
-      temperature: 0.85
-    }
   });
 
   const [queryLoading, setQueryLoading] = useState(false);
@@ -77,7 +70,6 @@ function SettingsContent() {
             buildDate: data.data.buildDate || prev.buildDate,
             icpConfig: data.data.icpConfig || prev.icpConfig,
             footerBadges: data.data.footerBadges ? [...data.data.footerBadges] : prev.footerBadges,
-            geminiConfig: { ...(prev.geminiConfig || {}), ...(data.data.geminiConfig || {}) }
           }));
         } else {
           console.error("❌ 后端返回失败:", data.message);
@@ -193,7 +185,6 @@ function SettingsContent() {
     { id: 'danmaku', name: '全站弹幕设置', icon: '⚡' },
     { id: 'comment', name: '评论管理', icon: '💬' },
     { id: 'guest_moment', name: '访客说说审核', icon: '✏️' },
-    { id: 'aicat', name: 'AI 煤球配置', icon: '🐾' },
   ];
 
   return (
@@ -233,7 +224,6 @@ function SettingsContent() {
               {activeTab === 'danmaku' && <DanmakuSection key="danmaku" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
               {activeTab === 'comment' && <CommentSection key="comment" />}
               {activeTab === 'guest_moment' && <GuestMomentSection key="guest_moment" />}
-              {activeTab === 'aicat' && <AICatSection key="aicat" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
             </AnimatePresence>
           </div>
 

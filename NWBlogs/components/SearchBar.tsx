@@ -41,8 +41,16 @@ const Highlight = ({ text = '', query = '' }) => {
 
 export default function SearchBar({ posts = [] }: { posts: Post[] }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -55,8 +63,8 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
   }, []);
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const query = searchQuery.toLowerCase();
+    if (!debouncedQuery.trim()) return [];
+    const query = debouncedQuery.toLowerCase();
 
     return posts.filter(post => {
       const titleMatch = (post.title || '').toLowerCase().includes(query);
@@ -65,7 +73,7 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
 
       return titleMatch || descMatch || tagMatch;
     });
-  }, [searchQuery, posts]);
+  }, [debouncedQuery, posts]);
 
   return (
     <div className="relative w-full max-w-2xl mx-auto mb-10 z-[100]" ref={containerRef}>

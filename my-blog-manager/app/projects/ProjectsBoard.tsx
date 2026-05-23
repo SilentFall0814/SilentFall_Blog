@@ -57,7 +57,8 @@ export default function ProjectsBoard() {
         githubUrl: data.githubUrl!,
         description: data.description || '暂无描述。',
         icon: data.icon || '🚀',
-        tags: data.tags || ['OpenSource']
+        tags: data.tags || ['OpenSource'],
+        date: data.date || new Date().toISOString().split('T')[0]
       };
       next = [newProj, ...editableProjects];
     } else {
@@ -119,6 +120,7 @@ export default function ProjectsBoard() {
                  <input type="text" value={projectModal.data.githubUrl || ''} onChange={e => setProjectModal({...projectModal, data: {...projectModal.data, githubUrl: e.target.value}})} className="w-full bg-slate-100 dark:bg-black/20 rounded-2xl px-5 py-3 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 border-none" placeholder="GitHub URL" />
                  <textarea value={projectModal.data.description || ''} onChange={e => setProjectModal({...projectModal, data: {...projectModal.data, description: e.target.value}})} className="w-full bg-slate-100 dark:bg-black/20 rounded-2xl px-5 py-3 dark:text-white h-24 outline-none resize-none focus:ring-2 focus:ring-indigo-500 border-none" placeholder="项目描述..." />
                  <input type="text" value={projectModal.data.tags?.join(', ') || ''} onChange={e => setProjectModal({...projectModal, data: {...projectModal.data, tags: e.target.value.split(',').map(t => t.trim())}})} className="w-full bg-slate-100 dark:bg-black/20 rounded-2xl px-5 py-3 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 border-none" placeholder="技术栈 (逗号分隔)" />
+                 <input type="date" value={projectModal.data.date || ''} onChange={e => setProjectModal({...projectModal, data: {...projectModal.data, date: e.target.value}})} className="w-full bg-slate-100 dark:bg-black/20 rounded-2xl px-5 py-3 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 border-none" />
                </div>
                <div className="mt-8 flex gap-3">
                  <button onClick={() => setProjectModal({ ...projectModal, isOpen: false })} className="flex-1 py-3 text-slate-500 font-bold uppercase text-xs">取消</button>

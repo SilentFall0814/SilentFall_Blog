@@ -33,6 +33,7 @@ async def sync_projects(request: Request):
             "  icon: string;\n"
             "  githubUrl: string;\n"
             "  tags: string[];\n"
+            "  date: string;\n"
             "};\n\n"
             f"export const projectsData: Project[] = {json_str};"
         )

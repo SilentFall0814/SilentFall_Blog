@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { usePathname } from 'next/navigation';
 
 interface Comment {
@@ -15,6 +15,64 @@ interface Comment {
   likes: number;
   created_at: string;
 }
+
+const formatDate = (d: string) => {
+  const date = new Date(d);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return '刚刚';
+  if (mins < 60) return `${mins} 分钟前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} 天前`;
+  return date.toLocaleDateString('zh-CN');
+};
+
+const CommentItem = memo(function CommentItem({
+  c,
+  onLike,
+  onReply
+}: {
+  c: Comment & { children: Comment[] };
+  onLike: (id: string) => void;
+  onReply: (id: string, author: string) => void;
+}) {
+  return (
+    <div className="flex gap-3 group">
+      <img
+        src={c.avatar || `https://cravatar.cn/avatar/?d=mp&s=80`}
+        alt={c.author}
+        className="w-9 h-9 rounded-full shrink-0 ring-2 ring-white/30 dark:ring-slate-700/50"
+        loading="lazy"
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{c.author}</span>
+          <span className="text-[11px] text-slate-400">{formatDate(c.created_at)}</span>
+        </div>
+        <div className="mt-1.5 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+          {c.content}
+        </div>
+        <div className="flex items-center gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onLike(c.id)}
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 transition-colors"
+          >
+            ❤️ {c.likes > 0 && c.likes}
+          </button>
+          <button
+            onClick={() => onReply(c.id, c.author)}
+            className="text-xs text-slate-400 hover:text-indigo-500 transition-colors"
+          >
+            回复
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export default function Comments() {
   const pathname = usePathname();
@@ -110,57 +168,9 @@ export default function Comments() {
     return roots;
   };
 
-  const formatDate = (d: string) => {
-    const date = new Date(d);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return '刚刚';
-    if (mins < 60) return `${mins} 分钟前`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours} 小时前`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days} 天前`;
-    return date.toLocaleDateString('zh-CN');
-  };
-
   const renderComment = (c: Comment & { children: Comment[] }, depth = 0) => (
     <div key={c.id} className={depth > 0 ? 'ml-8 border-l-2 border-indigo-200/30 dark:border-indigo-500/20 pl-4' : ''}>
-      <div className="flex gap-3 group">
-        <img
-          src={c.avatar || `https://cravatar.cn/avatar/?d=mp&s=80`}
-          alt={c.author}
-          className="w-9 h-9 rounded-full shrink-0 ring-2 ring-white/30 dark:ring-slate-700/50"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{c.author}</span>
-            <span className="text-[11px] text-slate-400">{formatDate(c.created_at)}</span>
-          </div>
-          <div className="mt-1.5 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
-            {c.reply_to && (
-              <span className="text-indigo-400 text-xs mr-1">
-                @{comments.find(x => x.id === c.reply_to)?.author || '某人'}
-              </span>
-            )}
-            {c.content}
-          </div>
-          <div className="flex items-center gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => handleLike(c.id)}
-              className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 transition-colors"
-            >
-              ❤️ {c.likes > 0 && c.likes}
-            </button>
-            <button
-              onClick={() => { setReplyTo(c.id); setContent(`@${c.author} `); }}
-              className="text-xs text-slate-400 hover:text-indigo-500 transition-colors"
-            >
-              回复
-            </button>
-          </div>
-        </div>
-      </div>
+      <CommentItem c={c} onLike={handleLike} onReply={(id, author) => { setReplyTo(id); setContent(`@${author} `); }} />
       {c.children.length > 0 && (
         <div className="mt-3 space-y-3">
           {c.children.map(child => renderComment(child as Comment & { children: Comment[] }, depth + 1))}

@@ -132,17 +132,16 @@ function EditorContent() {
     const payload = {
       id: docType === 'about' ? 'about' : (currentDocId === 'new' ? null : currentDocId),
       type: docType, title, tags, cover, mood, description: summary,
-      content: editorRef.current?.getContent() || '',
+      content: docType === 'milestone' ? '' : (editorRef.current?.getContent() || ''),
       date: date || new Date().toISOString().split('T')[0],
       published: isPublish
     };
 
     if (isPublish) {
       addOperation({
-        id: `publish_${Date.now()}`,
         type: "publish_article",
         label: `发布: ${title || '无标题'}`,
-        value: payload
+        payload: payload
       });
       setHasUnsavedChanges(false);
       showToast("🚀 已加入待处理队列！", "info");
@@ -211,36 +210,119 @@ function EditorContent() {
       </div>
 
       <PageTransition>
-        <main className="mx-auto w-[96%] max-w-[1750px] flex flex-row gap-6 relative" style={{ marginTop: '144px', height: 'calc(100vh - 144px - 32px)', marginBottom: '32px' }}>
+        {docType === 'milestone' ? (
+          <main className="mx-auto w-[96%] max-w-[900px] relative" style={{ marginTop: '144px', marginBottom: '32px' }}>
+            <button
+              onClick={handleBackClick}
+              className="absolute -top-14 left-2 px-5 py-2.5 bg-white/40 dark:bg-slate-800/60 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-2xl shadow-lg flex items-center gap-2 text-slate-700 dark:text-slate-200 font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all group z-50"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform text-indigo-500" />
+              返回上一级
+            </button>
 
-          <button
-            onClick={handleBackClick}
-            className="absolute -top-14 left-2 px-5 py-2.5 bg-white/40 dark:bg-slate-800/60 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-2xl shadow-lg flex items-center gap-2 text-slate-700 dark:text-slate-200 font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all group z-50"
-          >
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform text-indigo-500" />
-            返回上一级
-          </button>
+            <div className="bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 p-10 md:p-14">
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-10 tracking-tight">{currentDocId === 'new' ? '新增成果记录' : '编辑成果记录'}</h2>
 
-          <section className="flex-1 bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden">
-            <RichTextEditor
-              ref={editorRef}
-              title={title}
-              setTitle={(val) => { setTitle(val); setHasUnsavedChanges(true); }}
-              initialContent={content}
-              isTitleLocked={docType === 'about'}
-              onOpenImageTool={() => { setImgToolTarget('editor'); setIsImgToolOpen(true); }}
-              onChange={() => setHasUnsavedChanges(true)}
-            />
-          </section>
+              <div className="space-y-8">
+                <div>
+                  <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">标题</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => { setTitle(e.target.value); setHasUnsavedChanges(true); }}
+                    placeholder="输入成果标题..."
+                    className="w-full bg-white/50 dark:bg-slate-700/50 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-800 dark:text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder-slate-400"
+                  />
+                </div>
 
-          <aside className="w-[360px] shrink-0 bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden">
-            <MetaMatrix
-              type={docType as any} tags={tags} setTags={setTags} cover={cover} setCover={setCover} summary={summary} setSummary={setSummary} mood={mood} setMood={setMood}
-              allHistoryPostTags={historyPostTags} allHistoryChatterTags={historyChatterTags} isLoadingTags={isLoadingTags}
-              allHistoryMoods={historyMoods} onSave={(isPublish) => handleSave(isPublish, false)} isSaving={isSaving} lastSaved={lastSaved} onOpenImageTool={() => { setImgToolTarget('cover'); setIsImgToolOpen(true); }}
-            />
-          </aside>
-        </main>
+                <div>
+                  <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">日期</label>
+                  <input
+                    type="date"
+                    value={date ? date.split(' ')[0] : new Date().toISOString().split('T')[0]}
+                    onChange={(e) => { setDate(e.target.value); setHasUnsavedChanges(true); }}
+                    className="w-full bg-white/50 dark:bg-slate-700/50 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-800 dark:text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">封面图片</label>
+                  <div className="flex gap-3 items-center">
+                    <input
+                      type="text"
+                      value={cover}
+                      onChange={(e) => { setCover(e.target.value); setHasUnsavedChanges(true); }}
+                      placeholder="输入图片链接或点击右侧上传..."
+                      className="flex-1 bg-white/50 dark:bg-slate-700/50 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder-slate-400"
+                    />
+                    <button
+                      onClick={() => { setImgToolTarget('cover'); setIsImgToolOpen(true); }}
+                      className="px-6 py-4 bg-indigo-500/90 text-white rounded-2xl font-bold text-sm hover:bg-indigo-600 transition-all shrink-0 shadow-lg shadow-indigo-500/30"
+                    >
+                      上传图片
+                    </button>
+                  </div>
+                  {cover && (
+                    <div className="mt-4 rounded-2xl overflow-hidden border border-white/20 dark:border-white/10 max-h-60">
+                      <img src={cover} alt="封面预览" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-4 mt-12">
+                <button
+                  onClick={() => handleSave(false, false)}
+                  disabled={isSaving}
+                  className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all disabled:opacity-50"
+                >
+                  {isSaving ? '保存中...' : '存为草稿'}
+                </button>
+                <button
+                  onClick={() => handleSave(true, true)}
+                  className="flex-1 py-4 bg-indigo-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-500/30 hover:bg-indigo-600 transition-all"
+                >
+                  发布记录
+                </button>
+              </div>
+
+              {lastSaved && (
+                <p className="text-center text-[10px] text-slate-400 mt-4 font-mono">上次保存: {lastSaved}</p>
+              )}
+            </div>
+          </main>
+        ) : (
+          <main className="mx-auto w-[96%] max-w-[1750px] flex flex-row gap-6 relative" style={{ marginTop: '144px', height: 'calc(100vh - 144px - 32px)', marginBottom: '32px' }}>
+
+            <button
+              onClick={handleBackClick}
+              className="absolute -top-14 left-2 px-5 py-2.5 bg-white/40 dark:bg-slate-800/60 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-2xl shadow-lg flex items-center gap-2 text-slate-700 dark:text-slate-200 font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all group z-50"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform text-indigo-500" />
+              返回上一级
+            </button>
+
+            <section className="flex-1 bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden">
+              <RichTextEditor
+                ref={editorRef}
+                title={title}
+                setTitle={(val) => { setTitle(val); setHasUnsavedChanges(true); }}
+                initialContent={content}
+                isTitleLocked={docType === 'about'}
+                onOpenImageTool={() => { setImgToolTarget('editor'); setIsImgToolOpen(true); }}
+                onChange={() => setHasUnsavedChanges(true)}
+              />
+            </section>
+
+            <aside className="w-[360px] shrink-0 bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden">
+              <MetaMatrix
+                type={docType as any} tags={tags} setTags={setTags} cover={cover} setCover={setCover} summary={summary} setSummary={setSummary} mood={mood} setMood={setMood}
+                allHistoryPostTags={historyPostTags} allHistoryChatterTags={historyChatterTags} isLoadingTags={isLoadingTags}
+                allHistoryMoods={historyMoods} onSave={(isPublish) => handleSave(isPublish, false)} isSaving={isSaving} lastSaved={lastSaved} onOpenImageTool={() => { setImgToolTarget('cover'); setIsImgToolOpen(true); }}
+              />
+            </aside>
+          </main>
+        )}
       </PageTransition>
       <FloatingImageTool isOpen={isImgToolOpen} onClose={() => setIsImgToolOpen(false)} onInsert={(url) => {
         if (imgToolTarget === 'editor') { editorRef.current?.insertImage(url); if (!cover) setCover(url); }

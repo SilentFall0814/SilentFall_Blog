@@ -39,22 +39,26 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
       heading.id = getSafeId(heading.textContent || '');
     });
 
+    let ticking = false;
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const offset = 150;
-
-      let currentActiveId = "";
-
-      for (const heading of headings) {
-        const elementTop = heading.getBoundingClientRect().top + scrollY;
-        if (scrollY >= elementTop - offset) {
-          currentActiveId = heading.id;
-        } else {
-          break;
-        }
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const offset = 150;
+          let currentActiveId = "";
+          for (const heading of headings) {
+            const elementTop = heading.getBoundingClientRect().top + scrollY;
+            if (scrollY >= elementTop - offset) {
+              currentActiveId = heading.id;
+            } else {
+              break;
+            }
+          }
+          if (currentActiveId) setActiveId(currentActiveId);
+          ticking = false;
+        });
+        ticking = true;
       }
-
-      if (currentActiveId) setActiveId(currentActiveId);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });

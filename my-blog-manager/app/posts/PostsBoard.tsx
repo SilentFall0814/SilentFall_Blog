@@ -6,7 +6,7 @@ import { siteConfig } from '../../siteConfig';
 import { Plus, Pencil, Trash2, Search, Sparkles, AlertTriangle, X } from 'lucide-react';
 import { useToast } from '../../components/ToastProvider';
 
-type Chatter = {
+type Post = {
   slug: string;
   title: string;
   date: string;
@@ -16,8 +16,8 @@ type Chatter = {
   content: string;
 };
 
-export default function ChatterBoard({ chatters: initialChatters }: { chatters: Chatter[] }) {
-  const [chatters, setChatters] = useState(initialChatters);
+export default function PostsBoard({ posts: initialPosts }: { posts: Post[] }) {
+  const [posts, setPosts] = useState(initialPosts);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTag, setActiveTag] = useState("全部");
   const { showToast } = useToast();
@@ -30,19 +30,19 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    chatters.forEach(c => c.tags?.forEach(t => tags.add(t)));
+    posts.forEach(c => c.tags?.forEach(t => tags.add(t)));
     return ["全部", ...Array.from(tags)];
-  }, [chatters]);
+  }, [posts]);
 
-  const filteredChatters = useMemo(() => {
+  const filteredPosts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return chatters.filter(chatter => {
-      const matchSearch = (chatter.title || "").toLowerCase().includes(query) ||
-                          (chatter.content || "").toLowerCase().includes(query);
-      const matchTag = activeTag === "全部" || (chatter.tags && chatter.tags.includes(activeTag));
+    return posts.filter(post => {
+      const matchSearch = (post.title || "").toLowerCase().includes(query) ||
+                          (post.content || "").toLowerCase().includes(query);
+      const matchTag = activeTag === "全部" || (post.tags && post.tags.includes(activeTag));
       return matchSearch && matchTag;
     });
-  }, [chatters, searchQuery, activeTag]);
+  }, [posts, searchQuery, activeTag]);
 
   const confirmDelete = async () => {
     if (!deleteModal.slug) return;
@@ -56,8 +56,8 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
       });
       const data = await res.json();
       if (data.success) {
-        showToast("🗑️ 杂谈已从硬盘物理粉碎", "success");
-        setChatters(prev => prev.filter(c => c.slug !== deleteModal.slug));
+        showToast("🗑️ 文章已删除", "success");
+        setPosts(prev => prev.filter(c => c.slug !== deleteModal.slug));
       } else {
         showToast("❌ 销毁失败: " + data.message, "error");
       }
@@ -70,7 +70,7 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-10 py-10 relative z-10">
-      
+
       <AnimatePresence>
         {deleteModal.isOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -78,7 +78,7 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
             <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 dark:border-white/10 p-10 text-center overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50" />
               <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6"><AlertTriangle className="w-10 h-10 text-red-500" /></div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">销毁这篇杂谈？</h3>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">删除这篇文章？</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">你正在抹除 <span className="text-red-500 font-bold">"{deleteModal.title}"</span>。<br />此操作将永久删除物理 MD 文件，不可撤回。</p>
               <div className="flex gap-3">
                 <button onClick={() => setDeleteModal({ isOpen: false, slug: null, title: null })} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all">保留</button>
@@ -93,7 +93,7 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
         <h1 className="text-5xl font-black text-slate-800 dark:text-white mb-4 tracking-tight">碎片记忆</h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium italic opacity-80 flex items-center justify-center gap-2">
           <Sparkles size={14} className="text-indigo-500" />
-          “ {siteConfig.chatterDescription || "日常碎片与灵感记录"} ”
+          " {siteConfig.chatterDescription || "日常碎片与灵感记录"} "
         </p>
       </div>
 
@@ -111,8 +111,8 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
           {allTags.map(tag => (
             <button key={tag} onClick={() => setActiveTag(tag)}
               className={`px-5 py-2 rounded-xl text-xs font-black transition-all duration-500 border ${
-                activeTag === tag 
-                ? 'bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/30 scale-105' 
+                activeTag === tag
+                ? 'bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/30 scale-105'
                 : 'bg-white/30 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 border-white/20 dark:border-white/5 hover:bg-white/60 dark:hover:bg-slate-700/60'
               }`}
             >
@@ -124,7 +124,7 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
 
       <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
         <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="break-inside-avoid">
-          <Link href="/editor?type=chatter"
+          <Link href="/editor?type=post"
             className="group flex flex-col items-center justify-center min-h-[250px] rounded-[32px] border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white/10 dark:bg-slate-800/10 hover:bg-white/30 dark:hover:bg-indigo-500/5 hover:border-indigo-500 transition-all duration-500"
           >
             <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-90 transition-all duration-500 shadow-sm">
@@ -135,14 +135,14 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
         </motion.div>
 
         <AnimatePresence mode='popLayout'>
-          {filteredChatters.map((chatter) => (
+          {filteredPosts.map((post) => (
             <motion.div
               layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-              key={chatter.slug} className="break-inside-avoid group relative"
+              key={post.slug} className="break-inside-avoid group relative"
             >
               <div className="absolute top-5 left-5 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0">
                 <Link
-                  href={`/editor?id=${chatter.slug}&type=chatter`}
+                  href={`/editor?id=${post.slug}&type=post`}
                   className="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors"
                 >
                   <Pencil size={14} />
@@ -150,7 +150,7 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    setDeleteModal({ isOpen: true, slug: chatter.slug, title: chatter.title || "无标题笔记" });
+                    setDeleteModal({ isOpen: true, slug: post.slug, title: post.title || "无标题笔记" });
                   }}
                   className="w-8 h-8 rounded-lg bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                 >
@@ -158,25 +158,25 @@ export default function ChatterBoard({ chatters: initialChatters }: { chatters: 
                 </button>
               </div>
 
-              <Link href={`/chatter/${chatter.slug}`}
+              <Link href={`/posts/${post.slug}`}
                 className="block rounded-[32px] bg-white/40 dark:bg-slate-800/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden"
               >
-                {chatter.cover && (
+                {post.cover && (
                   <div className="w-full h-52 overflow-hidden relative">
-                    <img src={chatter.cover} alt="cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                    <img src={post.cover} alt="cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
                   </div>
                 )}
 
                 <div className="p-7">
                   <div className="flex items-center justify-between mb-4">
-                     <span className="text-[10px] font-bold text-slate-400 font-mono">{chatter.date}</span>
-                     {chatter.mood && <span className="text-[10px] font-black text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded-md">{chatter.mood}</span>}
+                     <span className="text-[10px] font-bold text-slate-400 font-mono">{post.date}</span>
+                     {post.mood && <span className="text-[10px] font-black text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded-md">{post.mood}</span>}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-indigo-500 transition-colors line-clamp-1">{chatter.title || "碎片记录"}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed mb-4">{chatter.content.substring(0, 100)}...</p>
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-indigo-500 transition-colors line-clamp-1">{post.title || "碎片记录"}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed mb-4">{post.content.substring(0, 100)}...</p>
                   <div className="flex flex-wrap gap-2">
-                    {chatter.tags?.map(tag => (
+                    {post.tags?.map(tag => (
                       <span key={tag} className="text-[10px] font-bold text-indigo-400"># {tag}</span>
                     ))}
                   </div>

@@ -3,18 +3,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider";
-import BackgroundEffects from "../components/BackgroundEffects";
 import { MusicProvider } from "../components/MusicProvider";
-import FloatingPlayer from "../components/FloatingPlayer";
 import { siteConfig } from "../siteConfig";
-import ClickEffect from "../components/ClickEffect";
-import BackgroundSlider from "../components/BackgroundSlider";
-import GlobalToolbox from "../components/GlobalToolbox";
-import SplashScreen from "../components/SplashScreen";
-import CyberCat from '../components/CyberCat';
-import DanmakuBackground from '../components/DanmakuBackground';
-
 import MobileBackButton from '../components/MobileBackButton';
+import { BackgroundEffects, DanmakuBackground, ClickEffect, SplashScreen, FloatingPlayer, GlobalToolbox, BackgroundSlider } from '../components/DynamicImports';
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -43,20 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
-              #app-mount-root { opacity: 0; visibility: hidden; pointer-events: none; }
-              html.splash-seen #app-mount-root { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
-            `
-          }}
-        />
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (sessionStorage.getItem('hasSeenSplash') === 'true') {
-                  document.documentElement.classList.add('splash-seen');
-                }
-              } catch (e) {}
+              #app-mount-root { opacity: 1; visibility: visible; pointer-events: auto; }
             `
           }}
         />
@@ -127,10 +106,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               }
             `}} />
           </MusicProvider>
-
-          <div className="hidden md:block">
-            <CyberCat />
-          </div>
 
         </ThemeProvider>
       </body>
