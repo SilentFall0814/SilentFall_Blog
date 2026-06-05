@@ -8,11 +8,48 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
-import rehypeHighlight from 'rehype-highlight';
+import rehypeHighlight from 'rehype-highlight/lib/core';
 import rehypeStringify from 'rehype-stringify';
 import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import css from 'highlight.js/lib/languages/css';
+import xml from 'highlight.js/lib/languages/xml';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import yaml from 'highlight.js/lib/languages/yaml';
+import markdown from 'highlight.js/lib/languages/markdown';
+import sql from 'highlight.js/lib/languages/sql';
+import java from 'highlight.js/lib/languages/java';
+import csharp from 'highlight.js/lib/languages/csharp';
+import cpp from 'highlight.js/lib/languages/cpp';
+import rust from 'highlight.js/lib/languages/rust';
+import go from 'highlight.js/lib/languages/go';
+import ruby from 'highlight.js/lib/languages/ruby';
+import php from 'highlight.js/lib/languages/php';
 import 'highlight.js/styles/atom-one-dark.css';
+
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('csharp', csharp);
+hljs.registerLanguage('cpp', cpp);
+hljs.registerLanguage('rust', rust);
+hljs.registerLanguage('go', go);
+hljs.registerLanguage('ruby', ruby);
+hljs.registerLanguage('php', php);
 
 import Navbar from '../../../components/Navbar';
 import PageTransition from '../../../components/PageTransition';
@@ -22,20 +59,15 @@ import ClientTOC from '../../../components/ClientTOC';
 import BackButton from '../../../components/BackButton';
 import SidebarLyric from "@/components/SidebarLyric";
 import Comments from '../../../components/DynamicComments';
+import { ArticleVisitTracker } from '../../../components/ArticleVisitTracker';
 
-export const revalidate = 3600;
+// 🌟 改为较短的 ISR 重新验证时间，新文章发布后最多 60 秒可访问
+export const revalidate = 60;
 
+// 🌟 返回空数组，让所有文章在首次访问时动态生成
+// 这样新发布的文章无需重新构建即可访问
 export async function generateStaticParams() {
-  const postsDirectory = path.join(process.cwd(), 'posts');
-  if (!fs.existsSync(postsDirectory)) return [];
-
-  const filenames = fs.readdirSync(postsDirectory);
-
-  return filenames
-    .filter((name) => name.endsWith('.md'))
-    .map((name) => ({
-      slug: name.replace(/\.md$/, ''),
-    }));
+  return [];
 }
 
 function extractToc(content: string) {
@@ -107,7 +139,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
 
           <article className="flex-1 bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-white/10 overflow-hidden transition-colors duration-700">
             <div className="w-full aspect-video bg-slate-200 dark:bg-slate-700 relative group">
-              <img src={postData.cover} alt="封面" className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105" />
+              <img src={postData.cover} alt="封面" width={1200} height={630} className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105" />
             </div>
 
             {/* 🌟 减少手机端的内边距 p-5 md:p-12 */}
@@ -144,7 +176,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
                   .prose h1 { font-size: 1.8rem !important; font-weight: 900 !important; margin-bottom: 1.2rem !important; margin-top: 2rem !important; line-height: 1.3 !important; color: inherit !important; }
                   .prose h2 { font-size: 1.5rem !important; font-weight: 800 !important; margin-bottom: 1rem !important; margin-top: 1.5rem !important; color: inherit !important; }
                   .prose h3 { font-size: 1.2rem !important; font-weight: 700 !important; margin-bottom: 0.8rem !important; color: inherit !important; }
-                  .prose p { font-size: 0.95rem !important; line-height: 1.75 !important; color: inherit !important; }
+                  .prose p { font-size: 0.95rem !important; line-height: 1.75 !important; color: inherit !important; overflow-wrap: break-word !important; word-break: break-word !important; }
 
                   .prose a { color: #6366f1 !important; text-decoration: none !important; font-weight: 600 !important; border-bottom: 1px dashed #6366f1 !important; transition: all 0.3s ease !important; }
                   .prose a:hover { color: #4f46e5 !important; border-bottom-style: solid !important; background-color: rgba(99, 102, 241, 0.1) !important; padding: 0 0.2rem !important; border-radius: 0.2rem !important; }
@@ -201,6 +233,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
                   .prose p code, .prose li code { background-color: rgba(99, 102, 241, 0.1) !important; color: #6366f1 !important; padding: 0.1rem 0.3rem !important; border-radius: 0.25rem !important; font-weight: 600 !important; font-size: 0.85em !important; }
                   .dark .prose p code, .dark .prose li code { background-color: rgba(99, 102, 241, 0.2) !important; color: #818cf8 !important; }
                   .prose img { display: block !important; margin: 1.5rem auto !important; border-radius: 1rem !important; box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important; max-width: 100% !important; height: auto !important; }
+                  .prose img[style*="width"] { max-width: none !important; }
 
                   .prose pre code .hljs-comment, .prose pre code .hljs-quote { color: #5c6370 !important; font-style: italic !important; }
                   .prose pre code .hljs-doctag, .prose pre code .hljs-keyword, .prose pre code .hljs-formula { color: #c678dd !important; }
@@ -216,20 +249,21 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
                     .prose h1 { font-size: 3rem !important; font-weight: 950 !important; margin-bottom: 2rem !important; margin-top: 3rem !important; line-height: 1.1 !important; }
                     .prose h2 { font-size: 2.2rem !important; margin-bottom: 1.5rem !important; margin-top: 2rem !important; }
                     .prose h3 { font-size: 1.5rem !important; margin-bottom: 1rem !important; }
-                    .prose p { font-size: 1.15rem !important; line-height: 1.85 !important; }
+                    .prose p { font-size: 1.15rem !important; line-height: 1.85 !important; overflow-wrap: break-word !important; word-break: break-word !important; }
 
                     .prose ul, .prose ol { padding-left: 2rem !important; font-size: 1.1rem !important; }
 
                     .prose pre { padding: 1.25rem !important; margin-top: 1.5rem !important; margin-bottom: 1.5rem !important; }
                     .prose pre code { font-size: 0.9em !important; }
                     .prose p code, .prose li code { padding: 0.2rem 0.4rem !important; font-size: 0.9em !important; border-radius: 0.375rem !important;}
-                    .prose img { margin: 2rem auto !important; border-radius: 2rem !important; box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important; }
+                    .prose img { margin: 2rem auto !important; border-radius: 2rem !important; box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important; max-width: 100% !important; height: auto !important; }
+                    .prose img[style*="width"] { max-width: none !important; }
                   }
                 `}</style>
 
                 <div
                   id="article-content"
-                  className="prose prose-slate dark:prose-invert prose-base md:prose-lg max-w-none text-slate-800 dark:text-slate-200 transition-colors duration-700 scroll-smooth"
+                  className="prose prose-slate dark:prose-invert prose-base md:prose-lg max-w-none text-slate-800 dark:text-slate-200 transition-colors duration-700 scroll-smooth break-words"
                   dangerouslySetInnerHTML={{ __html: postData.contentHtml }}
                 />
               </div>
@@ -237,6 +271,8 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
               <div className="mt-12 md:mt-16">
                 <Comments />
               </div>
+
+              <ArticleVisitTracker slug={postData.slug} title={postData.title || ''} />
 
             </div>
           </article>

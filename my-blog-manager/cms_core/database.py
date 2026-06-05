@@ -25,3 +25,7 @@ def get_comments_collection() -> Collection:
 
 def get_guest_moments_collection() -> Collection:
     return get_db()["guest_moments"]
+
+
+def get_announcements_collection() -> Collection:
+    return get_db()["announcements"]

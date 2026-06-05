@@ -146,7 +146,7 @@ def update_site_config(payload: Dict[str, Any] = Body(...)):
         "bgImages", "defaultPostCover", "photoWallImage", "cloudMusicIds", "social",
         "counts", "chatterTitle", "chatterDescription", "picBedName", "picBedUrl",
         "picBedToken", "useLocalPicBed", "danmakuList", "buildDate", "footerBadges",
-        "icpConfig", "geminiConfig",
+        "icpConfig",
         "faviconUrl",
         "navTitle",  # 👈 必须叫这个
         "navSuffix",  # 👈 必须叫这个

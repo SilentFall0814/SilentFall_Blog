@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import BackButton from '../../components/BackButton';
 import { friendsData } from '../../data/friends';
@@ -21,8 +21,12 @@ const itemVariants = {
 };
 
 export default function FriendsBoard() {
-  // 🌟 控制复制按钮的状态
+  const [mounted, setMounted] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 预设的申请格式
   const applyFormat = `名称：NoWinの博客\n简介：今天我也要学习吗\n链接：https://你的地址`;
@@ -59,7 +63,7 @@ export default function FriendsBoard() {
         animate="show"
         className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6"
       >
-        {friendsData.map((friend) => (
+        {mounted && friendsData.map((friend) => (
           <motion.div key={friend.id} variants={itemVariants} className="h-full">
             <a
               href={friend.url}

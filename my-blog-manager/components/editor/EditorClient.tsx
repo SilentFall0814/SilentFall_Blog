@@ -22,6 +22,8 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
 
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<string>("");
 
   // 💡 图床状态路由：区分当前打开的图床是给谁用的
   const [isImgToolOpen, setIsImgToolOpen] = useState(false);
@@ -71,7 +73,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
     setIsSaving(true);
 
     const payload = {
-      blog_path: "F:/Projects/my-blog",
+      blog_path: "[REDACTED_LOCAL_PATH]",
       id: docType === 'about' ? 'about' : (currentDocId === 'new' ? null : currentDocId),
       type: docType,
       title: docType === 'about' ? '关于我' : title,
@@ -98,13 +100,17 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
       if (data.success) {
         setLastSaved(new Date().toLocaleTimeString());
 
-        // 👇 就是漏了这句！加上成功提示框！
-        alert("✅ 草稿保存成功！。");
-
         // 如果是新文，保存后获得了真实的 ID，触发无感刷新
         if (currentDocId === 'new' && data.id) {
           setCurrentDocId(data.id); // 更新组件内存 ID
           window.history.replaceState(null, '', `/editor?id=${data.id}&type=${docType}`);
+        }
+
+        // 🌟 如果是正式发布，自动触发一键同步到博客
+        if (isPublish) {
+          await handleAutoSyncAfterSave(data.id || currentDocId);
+        } else {
+          alert("✅ 草稿保存成功！");
         }
       } else {
         alert("❌ 保存失败: " + (data.message || JSON.stringify(data)));
@@ -114,6 +120,83 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
       alert("❌ 引擎连接失败，请检查 Python 后端是否启动！");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /**
+   * 🌟 保存后自动同步到博客（绕过操作队列，直接调用 publish_and_sync）
+   */
+  const handleAutoSyncAfterSave = async (savedId: string) => {
+    setIsSyncing(true);
+    setSyncProgress("💾 草稿已保存，正在同步到博客...");
+
+    try {
+      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
+      const config = await configRes.json();
+      const apiBase = `http://127.0.0.1:${config.api_port}`;
+
+      // 获取目标博客路径
+      const syncConfigRes = await fetch(`${apiBase}/api/sync/config`);
+      let blogPath = "";
+      if (syncConfigRes.ok) {
+        const syncConfigData = await syncConfigRes.json();
+        blogPath = syncConfigData.blogPath || "";
+      }
+
+      // 构建单条发布操作
+      const publishOp = {
+        type: "publish_article",
+        payload: {
+          type: docType,
+          id: savedId,
+          title: docType === 'about' ? '关于我' : title,
+          tags: docType === 'about' ? [] : tags,
+          cover,
+          mood: docType === 'chatter' ? mood : null,
+          description: docType === 'about' ? '' : summary,
+          content: editorRef.current?.getContent() || '',
+          date: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        }
+      };
+
+      setSyncProgress("🚀 正在同步到博客目录...");
+
+      const res = await fetch(`${apiBase}/api/sync/publish_and_sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operations: [publishOp],
+          blogPath: blogPath
+        }),
+        signal: AbortSignal.timeout(60000)
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      if (data.success) {
+        setSyncProgress("✅ 发布并同步成功！");
+        alert("✅ 文章已发布并同步到博客！");
+      } else {
+        if (data.step === "sync_failed") {
+          setSyncProgress("⚠️ 本地已保存，同步失败");
+          alert(`✅ 文章已保存到本地\n❌ 同步失败：${data.sync_error || '未知错误'}\n💡 请在管理页重试同步`);
+        } else {
+          setSyncProgress("❌ 同步失败");
+          alert(`❌ ${data.message}`);
+        }
+      }
+    } catch (error: any) {
+      setSyncProgress("❌ 网络异常");
+      if (error.name === 'TimeoutError') {
+        alert("⏱️ 网络连接超时，文章已保存到本地，请稍后重试同步");
+      } else {
+        alert(`🌐 同步异常：${error.message}`);
+      }
+    } finally {
+      setIsSyncing(false);
+      setSyncProgress("");
     }
   };
 
@@ -151,6 +234,8 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
             setImgToolTarget('cover');
             setIsImgToolOpen(true);
           }}
+          isSyncing={isSyncing}
+          syncProgress={syncProgress}
         />
       </aside>
 

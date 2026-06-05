@@ -41,6 +41,8 @@ function EditorContent() {
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [isImgToolOpen, setIsImgToolOpen] = useState(false);
   const [imgToolTarget, setImgToolTarget] = useState<'editor' | 'cover'>('editor');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<string>("");
 
   const editorRef = useRef<RichTextEditorHandle>(null);
 
@@ -125,6 +127,88 @@ function EditorContent() {
     }
   };
 
+  /**
+   * 🌟 保存后自动同步到博客（绕过操作队列，直接调用 publish_and_sync）
+   */
+  const handleAutoSyncAfterSave = async (payload: any) => {
+    setIsSyncing(true);
+    setSyncProgress("💾 草稿已保存，正在同步到博客...");
+
+    try {
+      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
+      const config = await configRes.json();
+      const apiBase = `http://127.0.0.1:${config.api_port}`;
+
+      // 获取目标博客路径
+      const syncConfigRes = await fetch(`${apiBase}/api/sync/config`);
+      let blogPath = "";
+      if (syncConfigRes.ok) {
+        const syncConfigData = await syncConfigRes.json();
+        blogPath = syncConfigData.blogPath || "";
+      }
+
+      // 构建单条发布操作
+      const publishOp = {
+        type: "publish_article",
+        payload: {
+          type: payload.type,
+          id: payload.id || 'new',
+          title: payload.title,
+          tags: payload.tags || [],
+          cover: payload.cover || '',
+          mood: payload.mood || null,
+          description: payload.description || '',
+          content: payload.content || '',
+          date: payload.date || new Date().toISOString().slice(0, 19).replace('T', ' ')
+        }
+      };
+
+      setSyncProgress("🚀 正在同步到博客目录...");
+
+      const res = await fetch(`${apiBase}/api/sync/publish_and_sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operations: [publishOp],
+          blogPath: blogPath
+        }),
+        signal: AbortSignal.timeout(60000)
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      if (data.success) {
+        setSyncProgress("✅ 发布并同步成功！");
+        showToast("✅ 文章已发布并同步到博客！", "success");
+        setHasUnsavedChanges(false);
+        return true;
+      } else {
+        if (data.step === "sync_failed") {
+          setSyncProgress("⚠️ 本地已保存，同步失败");
+          showToast(`✅ 文章已保存到本地\n❌ 同步失败：${data.sync_error || '未知错误'}\n💡 请在管理页重试同步`, "warning");
+          return false;
+        } else {
+          setSyncProgress("❌ 同步失败");
+          showToast(`❌ ${data.message}`, "error");
+          return false;
+        }
+      }
+    } catch (error: any) {
+      setSyncProgress("❌ 网络异常");
+      if (error.name === 'TimeoutError') {
+        showToast("⏱️ 网络连接超时，文章已保存到本地，请稍后重试同步", "error");
+      } else {
+        showToast(`🌐 同步异常：${error.message}`, "error");
+      }
+      return false;
+    } finally {
+      setIsSyncing(false);
+      setSyncProgress("");
+    }
+  };
+
   const handleSave = async (isPublish: boolean, shouldExitAfterSave: boolean = false) => {
     if (!title.trim() && docType !== 'about') {
       showToast("⚠️ 请填写标题", "warning"); return;
@@ -138,17 +222,47 @@ function EditorContent() {
     };
 
     if (isPublish) {
-      addOperation({
-        type: "publish_article",
-        label: `发布: ${title || '无标题'}`,
-        payload: payload
-      });
-      setHasUnsavedChanges(false);
-      showToast("🚀 已加入待处理队列！", "info");
-      if (shouldExitAfterSave) router.back();
+      // 🌟 正式发布：先保存到草稿系统，然后自动触发同步
+      setIsSaving(true);
+      try {
+        const configRes = await fetch(`/backend_config.json`);
+        const config = await configRes.json();
+        const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/save`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          setLastSaved(new Date().toLocaleTimeString());
+          showToast("💾 草稿已落盘，正在同步...", "info");
+
+          // 自动触发同步
+          const syncOk = await handleAutoSyncAfterSave(payload);
+
+          if (syncOk) {
+            // 同步成功，清空未保存标记
+            setHasUnsavedChanges(false);
+            if (shouldExitAfterSave) router.back();
+          } else {
+            // 同步失败但本地保存成功，加入操作队列作为备选
+            addOperation({
+              type: "publish_article",
+              label: `发布: ${title || '无标题'}`,
+              payload: payload
+            });
+            showToast("⚠️ 同步失败，已加入待处理队列，可在管理页重试", "warning");
+          }
+        } else {
+          showToast(`❌ 保存失败：${data.message}`, "error");
+        }
+      } catch (e) {
+        showToast("❌ 保存失败", "error");
+      } finally {
+        setIsSaving(false);
+      }
       return;
     }
 
+    // 存为草稿（原有逻辑）
     setIsSaving(true);
     try {
       const configRes = await fetch(`/backend_config.json`);
@@ -319,6 +433,7 @@ function EditorContent() {
                 type={docType as any} tags={tags} setTags={setTags} cover={cover} setCover={setCover} summary={summary} setSummary={setSummary} mood={mood} setMood={setMood}
                 allHistoryPostTags={historyPostTags} allHistoryChatterTags={historyChatterTags} isLoadingTags={isLoadingTags}
                 allHistoryMoods={historyMoods} onSave={(isPublish) => handleSave(isPublish, false)} isSaving={isSaving} lastSaved={lastSaved} onOpenImageTool={() => { setImgToolTarget('cover'); setIsImgToolOpen(true); }}
+                isSyncing={isSyncing} syncProgress={syncProgress}
               />
             </aside>
           </main>

@@ -20,7 +20,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, List, ListOrdered, ListTodo,
   Highlighter, Code2, Heading1, Heading2, Heading3,
   Type, ImageIcon, Quote, RemoveFormatting, ChevronDown,
-  Pipette, Hash, Check, Link2, Superscript as SupIcon, Subscript as SubIcon, Minus, Palette, Lock
+  Pipette, Hash, Check, Link2, Superscript as SupIcon, Subscript as SubIcon, Minus, Palette, Lock, Trash2
 } from 'lucide-react';
 
 const CustomImage = Image.extend({
@@ -63,7 +63,7 @@ const CustomColorPicker = ({ activeColor, onSelect, onConfirm, recentColors, onC
 };
 
 export interface RichTextEditorHandle {
-  insertImage: (url: string) => void;
+  insertImage: (url: string, width?: string) => void;
   getContent: () => string;
 }
 
@@ -112,9 +112,9 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, EditorProps>(({ title, s
   });
 
   useImperativeHandle(ref, () => ({
-    insertImage: (url: string) => {
+    insertImage: (url: string, width?: string) => {
       if (editor) {
-        editor.chain().focus().setImage({ src: url }).run();
+        editor.chain().focus().setImage({ src: url, width: width || '100%' }).run();
         if (onChange) onChange();
       }
     },
@@ -241,7 +241,6 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, EditorProps>(({ title, s
           <Btn onClick={onOpenImageTool}><ImageIcon size={16} className="text-indigo-500"/></Btn>
         </div>
 
-        {editor.isActive('image') && <div className="flex items-center gap-1 ml-4 bg-indigo-500/10 p-1 px-3 rounded-2xl border border-indigo-500/20 border-dashed animate-in slide-in-from-left">{['25%', '50%', '75%', '100%'].map(s => <button key={s} onClick={() => editor.chain().focus().updateAttributes('image', { width: s }).run()} className="px-2 py-1 text-[9px] font-bold hover:bg-white rounded-lg transition-all">{s}</button>)}</div>}
         <div className="flex-1" />
         <div className="flex items-center gap-4">
           <div className="relative"><div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1.5 px-3 rounded-2xl border border-white/10 shadow-inner"><Palette size={14} className="text-slate-400 mr-2" /><div className="flex items-center gap-1 pr-2 border-r border-white/10">{textColors.map(c => <button key={c} onClick={() => editor.chain().focus().setColor(c).run()} onContextMenu={(e) => { e.preventDefault(); setTextColors(prev => prev.filter(col => col !== c)); }} className="w-4 h-4 rounded-full border border-white/40 hover:scale-125 transition-all shadow-sm" style={{ backgroundColor: c }} />)}</div><button onClick={() => { setShowTextPicker(!showTextPicker); setShowHighlightPicker(false); }} className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center border border-indigo-500/30"><Pipette size={14} className="text-indigo-500" /></button></div>{showTextPicker && <CustomColorPicker activeColor="#6366F1" recentColors={textColors} onClose={() => setShowTextPicker(false)} onSelect={(c: string) => editor.chain().focus().setColor(c).run()} onConfirm={(c: string) => { if(!textColors.includes(c)) setTextColors(p => [c, ...p].slice(0, 6)); setShowTextPicker(false); }} />}</div>

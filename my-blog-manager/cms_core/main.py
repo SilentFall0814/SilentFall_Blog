@@ -6,6 +6,8 @@ from cms_core.api import music, config, picbed, drafts, moments
 from cms_core.api import gallery, friends, projects
 from cms_core.api import sync, comments, guest_moments
 from cms_core.api import analytics
+from cms_core.api import steam
+from cms_core.api import announcements
 
 app = FastAPI(title="NoWin_Blog CMS Backend", version="1.0.0")
 
@@ -35,3 +37,5 @@ app.include_router(sync.router, prefix="/api/sync", tags=["Sync"])
 app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
 app.include_router(guest_moments.router, prefix="/api/guest_moments", tags=["GuestMoments"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(steam.router, prefix="/api/steam", tags=["Steam"])
+app.include_router(announcements.router, prefix="/api/announcements", tags=["Announcements"])

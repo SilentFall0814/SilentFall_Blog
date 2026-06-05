@@ -3,7 +3,7 @@ title: 关于我
 date: '2026-03-31 21:36:22'
 tags: []
 mood: ''
-cover: https://bu.dusays.com/2026/03/24/69c23dc278c78.jpg
+cover: /uploads/88242e4974bfacd40bf2e024e2bb0a2e.jpg
 description: ''
 ---
 
@@ -15,7 +15,7 @@ description: ''
 
 ‍
 
-目前正在学习C/C++、前端、Python。
+目前正在学习C/C++、前端（AI代替了）、Python。
 
 爱好？  
 骑车闲逛、拍照、篮球？、搞一些奇奇怪怪的东西还有个最重要的——打瓦！！！
@@ -23,6 +23,6 @@ description: ''
 ‍
 
 打瓦吗？  
-我的ID：没有天赋那就反复#36726
+我的ID：ZmjjKK#25396
 
 **欢迎各位朋友来到这里呀~~~**

@@ -22,7 +22,6 @@
 - **ThemeProvider** - 日间/夜间主题切换（默认日间模式）
 - **VisitorMomentEditor** - 访客说说富文本编辑器（Tiptap）
 - **Comments / MomentComments** - 评论系统（MongoDB + Cravatar 头像）
-- **CyberCat** - AI 猫猫助理
 - **CloudPlayer / FloatingPlayer** - 网易云音乐播放器
 - **WeatherWidget** - 天气组件
 - **DanmakuBackground** - 弹幕背景特效
@@ -36,7 +35,6 @@
 |------|----------|------|
 | `/api/comments` | `/api/comments/*` | 评论 CRUD |
 | `/api/guest-moments` | `/api/guest_moments/*` | 访客说说提交与查询 |
-| `/api/chat` | AI 接口 | AI 猫猫助理 |
 | `/api/weather` | 天气 API | 天气数据 |
 
 ## 开发
@@ -65,5 +63,4 @@ HOSTNAME=0.0.0.0 CMS_BACKEND_URL=http://127.0.0.1:8765 node .next/standalone/ser
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `CMS_BACKEND_URL` | Python 后端地址 | `http://127.0.0.1:8765` |
-| `GEMINI_API_KEY` | AI 猫猫助理 API 密钥 | 空 |
 | `PORT` | 端口号 | `3000` |

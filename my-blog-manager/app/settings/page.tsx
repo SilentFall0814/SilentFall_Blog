@@ -13,8 +13,6 @@ import BackgroundSection from '../../components/settings/BackgroundSection';
 import MusicSection from '../../components/settings/MusicSection';
 import GallerySection from '../../components/settings/GallerySection';
 import DisplaySection from '../../components/settings/DisplaySection';
-import CommentSection from '../../components/settings/CommentSection';
-import GuestMomentSection from '../../components/settings/GuestMomentSection';
 import DanmakuSection from '../../components/settings/DanmakuSection';
 import FooterSection from '../../components/settings/FooterSection';
 
@@ -183,8 +181,6 @@ function SettingsContent() {
     { id: 'gallery', name: '图库配置管理', icon: '🖼️' },
     { id: 'footer', name: '首页底部设置', icon: '🧩' },
     { id: 'danmaku', name: '全站弹幕设置', icon: '⚡' },
-    { id: 'comment', name: '评论管理', icon: '💬' },
-    { id: 'guest_moment', name: '访客说说审核', icon: '✏️' },
   ];
 
   return (
@@ -222,8 +218,6 @@ function SettingsContent() {
               {activeTab === 'gallery' && <GallerySection key="gallery" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
               {activeTab === 'footer' && <FooterSection key="footer" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
               {activeTab === 'danmaku' && <DanmakuSection key="danmaku" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
-              {activeTab === 'comment' && <CommentSection key="comment" />}
-              {activeTab === 'guest_moment' && <GuestMomentSection key="guest_moment" />}
             </AnimatePresence>
           </div>
 

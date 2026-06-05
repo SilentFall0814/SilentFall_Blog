@@ -7,12 +7,48 @@ import { notFound } from 'next/navigation';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
-import rehypeHighlight from 'rehype-highlight';
+import rehypeHighlight from 'rehype-highlight/lib/core';
 import rehypeStringify from 'rehype-stringify';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import css from 'highlight.js/lib/languages/css';
+import xml from 'highlight.js/lib/languages/xml';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import yaml from 'highlight.js/lib/languages/yaml';
+import markdown from 'highlight.js/lib/languages/markdown';
+import sql from 'highlight.js/lib/languages/sql';
+import java from 'highlight.js/lib/languages/java';
+import csharp from 'highlight.js/lib/languages/csharp';
+import cpp from 'highlight.js/lib/languages/cpp';
+import rust from 'highlight.js/lib/languages/rust';
+import go from 'highlight.js/lib/languages/go';
+import ruby from 'highlight.js/lib/languages/ruby';
+import php from 'highlight.js/lib/languages/php';
 import 'highlight.js/styles/atom-one-dark.css';
+
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('csharp', csharp);
+hljs.registerLanguage('cpp', cpp);
+hljs.registerLanguage('rust', rust);
+hljs.registerLanguage('go', go);
+hljs.registerLanguage('ruby', ruby);
+hljs.registerLanguage('php', php);
 
 import Navbar from '../../../components/Navbar';
 import PageTransition from '../../../components/PageTransition';
@@ -122,12 +158,14 @@ export default async function Post({ params }: { params: { slug: string } }) {
                 .prose h1 { font-size: 3rem !important; font-weight: 950 !important; margin-bottom: 2rem !important; margin-top: 3rem !important; line-height: 1.1 !important; color: inherit !important; }
                 .prose h2 { font-size: 2.2rem !important; font-weight: 800 !important; margin-bottom: 1.5rem !important; margin-top: 2rem !important; color: inherit !important; }
                 .prose h3 { font-size: 1.5rem !important; font-weight: 700 !important; margin-bottom: 1rem !important; color: inherit !important; }
-                .prose p { font-size: 1.15rem !important; line-height: 1.85 !important; color: inherit !important; }
+                .prose p { font-size: 1.15rem !important; line-height: 1.85 !important; color: inherit !important; overflow-wrap: break-word !important; word-break: break-word !important; }
                 .prose ul { list-style-type: disc !important; padding-left: 1.5rem !important; }
                 .prose ol { list-style-type: decimal !important; padding-left: 1.5rem !important; }
                 .prose img { display: block !important; margin: 2rem auto !important; border-radius: 2rem !important; box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important; max-width: 100% !important; height: auto !important; }
+                .prose img[style*="width"] { max-width: none !important; }
+                .prose { overflow-wrap: break-word !important; word-break: break-word !important; }
               `}</style>
-              <div className="prose dark:prose-invert max-w-none prose-indigo" dangerouslySetInnerHTML={{ __html: postData.contentHtml }} />
+              <div className="prose dark:prose-invert max-w-none prose-indigo break-words" dangerouslySetInnerHTML={{ __html: postData.contentHtml }} />
             </div>
 
             <div className="mt-20 pt-10 border-t border-slate-300/30 dark:border-slate-700/50">

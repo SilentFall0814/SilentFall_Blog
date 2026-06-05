@@ -40,8 +40,8 @@ export default function VisitorMomentEditor({ onClose, onSuccess }: { onClose: (
   });
 
   const handleSubmit = useCallback(async () => {
-    if (!author.trim() || !email.trim()) {
-      alert('请填写姓名和邮箱');
+    if (!author.trim()) {
+      alert('请填写姓名');
       return;
     }
     if (!editor?.getText().trim()) {
@@ -52,7 +52,9 @@ export default function VisitorMomentEditor({ onClose, onSuccess }: { onClose: (
     setSubmitting(true);
     try {
       localStorage.setItem('vm_author', author.trim());
-      localStorage.setItem('vm_email', email.trim());
+      if (email.trim()) {
+        localStorage.setItem('vm_email', email.trim());
+      }
 
       const res = await fetch('/api/guest-moments', {
         method: 'POST',
@@ -133,7 +135,7 @@ export default function VisitorMomentEditor({ onClose, onSuccess }: { onClose: (
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
-                  <Mail size={10} /> 邮箱 <span className="text-red-400">*</span>
+                  <Mail size={10} /> 邮箱 <span className="text-slate-400 dark:text-slate-500">(选填)</span>
                 </label>
                 <input
                   type="email"

@@ -9,12 +9,12 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || 'approved';
     const qs = new URLSearchParams({ page_id, status }).toString();
     const res = await fetch(`${BACKEND_URL}/api/comments/list?${qs}`, {
-      next: { revalidate: 30 }
+      cache: 'no-store'
     });
     const data = await res.json();
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     });
   } catch (error) {

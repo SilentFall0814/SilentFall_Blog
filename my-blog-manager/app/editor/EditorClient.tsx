@@ -88,13 +88,70 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
       published: isPublish
     };
 
-    // 此处对接后端 API ...
-    console.log("执行物理落盘:", payload);
+    try {
+      // 先保存草稿到后端
+      const configRes = await fetch('/backend_config.json');
+      const config = await configRes.json();
+      const saveRes = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: payload.id,
+          type: payload.type,
+          title: payload.title,
+          tags: payload.tags,
+          cover: payload.cover,
+          mood: payload.mood,
+          description: payload.description,
+          content: payload.content,
+          date: new Date().toISOString().split('T')[0],
+        }),
+      });
+      const saveData = await saveRes.json();
 
-    setTimeout(() => {
+      if (!saveData.success) {
+        showToast(`保存失败: ${saveData.message}`, 'error');
+        setIsSaving(false);
+        return;
+      }
+
+      // 如果是发布，调用同步到本地
+      if (isPublish) {
+        const syncRes = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/sync_local`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operations: [{
+              type: 'publish_article',
+              payload: {
+                id: saveData.id,
+                type: payload.type,
+                title: payload.title,
+                tags: payload.tags,
+                cover: payload.cover,
+                mood: payload.mood,
+                description: payload.description,
+                content: payload.content,
+                date: new Date().toISOString().split('T')[0],
+              },
+            }],
+          }),
+        });
+        const syncData = await syncRes.json();
+        if (syncData.success) {
+          showToast(isPublish ? '发布成功' : '草稿已保存', 'success');
+        } else {
+          showToast(`发布失败: ${syncData.message}`, 'error');
+        }
+      } else {
+        showToast('草稿已保存', 'success');
+      }
+    } catch (e: any) {
+      showToast(`保存失败: ${e.message}`, 'error');
+    } finally {
       setIsSaving(false);
       setLastSaved(new Date().toLocaleTimeString());
-    }, 1000);
+    }
   };
 
   return (

@@ -1,4 +1,3 @@
-import 'katex/dist/katex.min.css';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
@@ -7,6 +6,8 @@ import { MusicProvider } from "../components/MusicProvider";
 import { siteConfig } from "../siteConfig";
 import MobileBackButton from '../components/MobileBackButton';
 import { BackgroundEffects, DanmakuBackground, ClickEffect, SplashScreen, FloatingPlayer, GlobalToolbox, BackgroundSlider } from '../components/DynamicImports';
+import AnnouncementModal from '../components/AnnouncementModal';
+import { VisitTracker } from './VisitTracker';
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -45,6 +46,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeProvider>
 
           <SplashScreen />
+
+          <VisitTracker />
+
+          <AnnouncementModal />
 
           <MusicProvider>
             <div id="app-mount-root" className="flex-1 flex flex-col transition-opacity duration-1000">

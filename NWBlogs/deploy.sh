@@ -7,7 +7,6 @@ MANAGER_DIR="$(dirname "$BLOG_DIR")/my-blog-manager"
 export MONGO_URI="${MONGO_URI:-mongodb://localhost:27017}"
 export MONGO_DB_NAME="${MONGO_DB_NAME:-nowin_blog}"
 export CMS_BACKEND_URL="${CMS_BACKEND_URL:-http://127.0.0.1:8765}"
-export GEMINI_API_KEY="${GEMINI_API_KEY:-}"
 export PORT="${PORT:-3000}"
 
 echo "========================================="

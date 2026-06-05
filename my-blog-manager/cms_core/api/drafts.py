@@ -2,6 +2,7 @@ import os
 import json
 import time
 import yaml
+import shutil
 from fastapi import APIRouter, Request, Body
 from datetime import datetime
 import re
@@ -14,6 +15,46 @@ router = APIRouter()
 # 🌟 终极物理锁死防线：绝对定位到 my-blog-manager 根目录，无视任何全局目录切换！
 CURRENT_API_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_API_DIR, "..", ".."))
+
+
+DEPLOY_CONFIG_PATH = os.path.join(PROJECT_ROOT, "data", "deploy_config.json")
+
+
+def _read_blog_path() -> str:
+    """读取配置的目标博客路径"""
+    if os.path.exists(DEPLOY_CONFIG_PATH):
+        try:
+            with open(DEPLOY_CONFIG_PATH, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            return cfg.get("blogPath", "")
+        except Exception:
+            pass
+    return ""
+
+
+def _sync_delete_to_blog(file_path: str, relative_path: str):
+    """
+    当管理端删除文章后，同步删除博客用户端的对应文件
+    :param file_path: 管理端已删除的文件路径（用于日志）
+    :param relative_path: 相对于项目根目录的路径（如 posts/xxx.md）
+    """
+    blog_path = _read_blog_path()
+    if not blog_path:
+        print(f"[同步删除] 未配置目标博客路径，跳过同步")
+        return False
+
+    target_file = os.path.join(blog_path, relative_path)
+    if os.path.exists(target_file):
+        try:
+            os.remove(target_file)
+            print(f"[同步删除] 已同步删除博客端文件: {target_file}")
+            return True
+        except Exception as e:
+            print(f"[同步删除] 删除博客端文件失败: {str(e)}")
+            return False
+    else:
+        print(f"[同步删除] 博客端文件不存在: {target_file}")
+        return False
 
 
 def get_manager_drafts_dir() -> str:
@@ -169,36 +210,75 @@ async def delete_draft(request: Request):
         return {"success": False, "message": "JSON 解析失败"}
 
     raw_id = payload.get("id", "").replace(".md", "").replace(".json", "")
+    doc_title = payload.get("title", "")
     # 🌟 修复：用 PROJECT_ROOT 替换 os.getcwd()
     base_dir = PROJECT_ROOT
     drafts_dir = get_manager_drafts_dir()
 
     possible_paths = [
-        os.path.join(drafts_dir, f"{raw_id}.json"),
-        os.path.join(base_dir, "posts", f"{raw_id}.md"),
-        os.path.join(base_dir, "milestones", f"{raw_id}.md")
+        (os.path.join(drafts_dir, f"{raw_id}.json"), None),  # 草稿文件不需要同步到博客
+        (os.path.join(base_dir, "posts", f"{raw_id}.md"), "posts"),
+        (os.path.join(base_dir, "milestones", f"{raw_id}.md"), "milestones")
     ]
 
     deleted_count = 0
-    for p in possible_paths:
+    deleted_page_id = raw_id  # 默认用原始 ID 清理评论
+    deleted_relative_paths = []  # 记录已删除的相对路径，用于同步到博客
+
+    for p, dir_name in possible_paths:
         if os.path.exists(p):
             try:
                 os.remove(p)
                 deleted_count += 1
-                
-                # 🌟 核心修复：物理文件销毁后，同步清理数据库中的相关评论
-                try:
-                    comments_coll = get_comments_collection()
-                    # 同时尝试删除 /posts/ID 和 /chatter/ID 的评论，以绝后患
-                    delete_result = comments_coll.delete_many({"page_id": f"/posts/{raw_id}"})
-                    print(f"[评论清理] 已自动删除 {delete_result.deleted_count} 条关联评论 (PageID: {raw_id})")
-                except Exception as ce:
-                    print(f"[评论清理失败] {str(ce)}")
+                deleted_page_id = raw_id
+                # 记录需要同步删除的博客端路径
+                if dir_name:
+                    deleted_relative_paths.append(f"{dir_name}/{os.path.basename(p)}")
             except:
                 continue
 
+    # 如果没找到精确匹配的文件，尝试通过标题匹配扫描 posts 和 milestones 目录
+    if deleted_count == 0 and doc_title:
+        for scan_dir_name in ["posts", "milestones"]:
+            scan_dir = os.path.join(base_dir, scan_dir_name)
+            if not os.path.exists(scan_dir):
+                continue
+            for filename in os.listdir(scan_dir):
+                if filename.endswith(".md"):
+                    # 检查文件内容中的标题是否匹配
+                    file_path = os.path.join(scan_dir, filename)
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        # 解析 YAML front matter 提取标题
+                        if content.strip().startswith("---"):
+                            parts = content.split("---", 2)
+                            if len(parts) >= 3:
+                                import yaml
+                                fm = yaml.safe_load(parts[1])
+                                if fm and fm.get("title") == doc_title:
+                                    os.remove(file_path)
+                                    deleted_count += 1
+                                    deleted_page_id = filename.replace(".md", "")
+                                    deleted_relative_paths.append(f"{scan_dir_name}/{filename}")
+                                    break
+                    except:
+                        continue
+
+    # 🌟 同步删除博客用户端的对应文件
+    for rel_path in deleted_relative_paths:
+        _sync_delete_to_blog("", rel_path)
+
+    # 清理关联评论
     if deleted_count > 0:
-        return {"success": True, "message": f"已彻底销毁相关文件"}
+        try:
+            comments_coll = get_comments_collection()
+            delete_result = comments_coll.delete_many({"page_id": f"/posts/{deleted_page_id}"})
+            print(f"[评论清理] 已自动删除 {delete_result.deleted_count} 条关联评论 (PageID: {deleted_page_id})")
+        except Exception as ce:
+            print(f"[评论清理失败] {str(ce)}")
+
+        return {"success": True, "message": "已彻底销毁相关文件"}
     return {"success": False, "message": "未找到相关文件"}
 
 
@@ -263,13 +343,30 @@ async def sync_local_operations(request: Request):
             }
             final_text = f"---\n{yaml.dump(fm, allow_unicode=True, sort_keys=False)}---\n\n{md_content}"
 
+            # 生成文件名：用标题作为文件名，去除非法字符
+            def make_filename(title_str):
+                """将标题转换为合法的文件名"""
+                if not title_str:
+                    return f"{doc_type}_{int(time.time())}"
+                # 移除文件名中的非法字符
+                illegal_chars = r'[\\/:*?"<>|]'
+                name = re.sub(illegal_chars, "", title_str)
+                # 去除首尾空格
+                name = name.strip()
+                # 限制长度，避免文件名过长
+                if len(name) > 50:
+                    name = name[:50]
+                return name if name else f"{doc_type}_{int(time.time())}"
+
             if doc_type == "about":
                 save_path = os.path.join(base_dir, "app", "about", "about.md")
             elif doc_type == "milestone":
-                save_path = os.path.join(base_dir, "milestones", f"{final_id}.md")
+                filename = make_filename(fm["title"])
+                save_path = os.path.join(base_dir, "milestones", f"{filename}.md")
             else:
                 folder = "posts"
-                save_path = os.path.join(base_dir, folder, f"{final_id}.md")
+                filename = make_filename(fm["title"])
+                save_path = os.path.join(base_dir, folder, f"{filename}.md")
 
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
             with open(save_path, "w", encoding="utf-8") as f:

@@ -31,7 +31,8 @@ export default function LatestPostsCarousel({ posts }: { posts: any[] }) {
   return (
     <div className="md:col-span-4 rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl overflow-hidden relative group min-h-[420px] h-full flex flex-col">
 
-      <Link href={currentPost.slug === 'none' ? '#' : `/chatter/${currentPost.slug}`} className="absolute inset-0 z-20" aria-label={`阅读 ${currentPost.title}`} />
+      {/* 文章链接 - 指向 /posts/ 路由 */}
+      <Link href={currentPost.slug === 'none' ? '#' : `/posts/${currentPost.slug}`} className="absolute inset-0 z-20" aria-label={`阅读 ${currentPost.title}`} />
 
       <AnimatePresence mode="wait">
         <motion.div

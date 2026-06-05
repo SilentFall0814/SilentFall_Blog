@@ -26,6 +26,8 @@ export default function MomentComments({ id }: MomentCommentsProps) {
   const [content, setContent] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const fetchComments = useCallback(async () => {
     try {
@@ -51,7 +53,12 @@ export default function MomentComments({ id }: MomentCommentsProps) {
   }, [fetchComments]);
 
   const handleSubmit = async () => {
-    if (!author.trim() || !content.trim()) return;
+    if (!author.trim() || !content.trim()) {
+      setErrorMsg('昵称和内容不能为空');
+      return;
+    }
+    setSubmitting(true);
+    setErrorMsg('');
     try {
       const res = await fetch('/api/comments', {
         method: 'POST',
@@ -71,8 +78,14 @@ export default function MomentComments({ id }: MomentCommentsProps) {
         setReplyTo(null);
         setExpanded(false);
         fetchComments();
+      } else {
+        setErrorMsg(data.message || '提交失败');
       }
-    } catch {}
+    } catch (e) {
+      setErrorMsg('网络错误，请稍后再试');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const formatDate = (d: string) => {
@@ -148,6 +161,10 @@ export default function MomentComments({ id }: MomentCommentsProps) {
             </div>
           )}
 
+          {errorMsg && (
+            <div className="text-[11px] text-red-500 bg-red-500/10 rounded px-2 py-1">{errorMsg}</div>
+          )}
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -159,13 +176,13 @@ export default function MomentComments({ id }: MomentCommentsProps) {
             />
             <button
               onClick={handleSubmit}
-              disabled={!author.trim() || !content.trim()}
+              disabled={submitting || !author.trim() || !content.trim()}
               className="px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-xs font-bold disabled:opacity-40"
             >
-              发送
+              {submitting ? '发送中...' : '发送'}
             </button>
             <button
-              onClick={() => { setExpanded(false); setReplyTo(null); setContent(''); }}
+              onClick={() => { setExpanded(false); setReplyTo(null); setContent(''); setErrorMsg(''); }}
               className="px-2 py-1.5 text-xs text-slate-400 hover:text-slate-600"
             >
               收起

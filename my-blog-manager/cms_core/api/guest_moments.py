@@ -10,11 +10,13 @@ router = APIRouter()
 
 class GuestMomentSubmit(BaseModel):
     author: str
-    email: str
+    email: Optional[str] = ""
     content: str
     location: Optional[str] = ""
 
 def _gravatar_url(email: str, size: int = 80) -> str:
+    if not email or not email.strip():
+        return f"https://cravatar.cn/avatar/default?d=mp&s={size}"
     email = email.strip().lower()
     h = hashlib.md5(email.encode()).hexdigest()
     return f"https://cravatar.cn/avatar/{h}?d=mp&s={size}"

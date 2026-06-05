@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../../components/BackButton'; // 注意层级路径
 import { projectsData } from '../../data/projects';
 
 export default function ProjectsBoard() {
+  const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 搜索过滤逻辑
   const filteredProjects = useMemo(() => {
@@ -57,7 +62,7 @@ export default function ProjectsBoard() {
       {/* 矩阵展示区：CSS Grid 布局 */}
       <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 relative">
         <AnimatePresence>
-          {filteredProjects.map((project) => (
+          {mounted && filteredProjects.map((project) => (
             <motion.div
               layout
               initial={{ opacity: 0, scale: 0.9, y: 20 }}

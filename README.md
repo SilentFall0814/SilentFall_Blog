@@ -1,6 +1,6 @@
 # NoWin_Blog - 自托管个人博客系统
 
-基于 [XHBlogs](https://github.com/heiehiehi/XinghuisamaBlogs) 二次开发，使用 Next.js + Python FastAPI 构建的高颜值毛玻璃风格个人博客系统。**完全自托管，无需 GitHub/Vercel。**
+基于 [XHBlogs](https://github.com/heiehiehi/XinghuisamaBlogs) 二次开发，使用 Next.js 16 + Python FastAPI 构建的高颜值毛玻璃风格个人博客系统。**完全自托管，无需 GitHub/Vercel。**
 
 > 🙏 **致谢**：本项目由 [XHBlogs](https://github.com/heiehiehi/XinghuisamaBlogs) 二改而来，感谢原作者 [heiehiehi](https://github.com/heiehiehi) 的优秀作品。
 
@@ -20,8 +20,15 @@
 
 - **文章**：Markdown 写作，支持代码高亮（One Dark 主题）、数学公式（KaTeX）、目录导航（TOC）
 - **说说**：博主说说（Markdown 文件）+ 访客说说（MongoDB）混合展示，按时间排序
-- **草稿**：后台草稿箱，暂存未发布内容
+- **关于页面**：后台可视化编辑关于页面内容，一键跳转编辑器
 - **操作暂存区**：修改设置 → 暂存到操作队列 → 更新本地 → 同步 Blog
+
+### 📢 博客公告
+
+- **后台管理**：创建/编辑/删除公告，支持草稿和发布状态切换
+- **前台弹窗**：会话级居中弹窗，仅在新标签页首次访问时触发（sessionStorage 控制）
+- **多公告堆叠**：多条已发布公告按发布时间降序在同一弹窗内展示
+- **溢出滚动**：弹窗最大高度 80vh，超出部分内部滚动
 
 ### 💬 评论系统
 
@@ -36,11 +43,18 @@
 
 访客可以在说说页面发布自己的内容，支持：
 - 富文本编辑器（Tiptap：加粗、斜体、高亮、下划线、对齐等）
-- 填写昵称、邮箱、内容
+- 填写昵称、邮箱（可选）、内容
 - 提交后进入**待审核**状态，前台不显示
-- 博主在后台审核面板中可**通过/拒绝/删除**
+- 博主在审核中心统一审核（通过/拒绝/删除）
 - 审核通过后在前台说说列表中与博主说说混合展示
 - 访客说说带有"访客"标识，与博主说说区分
+
+###  Steam 游戏库
+
+展示博主的 Steam 游戏收藏与通关记录，支持：
+- **前端展示**：搜索、分类筛选（所有游戏/已安装/通关留念）、6 列响应式网格、悬停动效、图片容错
+- **后台管理**：完整 CRUD（添加/编辑/删除游戏）、封面上传（支持 URL 输入和本地上传）、数据同步
+- **游戏状态**：未安装、已安装、已通关、完美通关
 
 ### 🎨 主题系统
 
@@ -48,13 +62,6 @@
 - 主题偏好持久化到 localStorage
 - 毛玻璃风格 UI
 - 多种背景特效：樱花、萤火虫、弹幕、天气效果、风草等
-
-### 🤖 AI 猫猫助理
-
-内置 AI 驱动的猫猫助理，在后台管理器设置中配置 API 密钥即可启用：
-- 支持 OpenAI 兼容接口（DeepSeek、Gemini 等）
-- 可自定义模型、系统提示词、温度等参数
-- 前台与管理端均可使用
 
 ### 🎵 网易云音乐
 
@@ -65,8 +72,9 @@
 ### 🖼️ 图床
 
 - 内置图床上传功能，支持"去不图床"等标准 API 图床
-- 支持本地存储模式
+- 支持本地存储模式（图片保存到 `public/uploads/`）
 - 支持直接插入图片外链
+- 编辑器内拖拽上传
 
 ### 🔗 友链系统
 
@@ -83,6 +91,9 @@
 - **全局工具箱**：计算器等小工具
 - **搜索功能**：文章搜索（防抖优化）
 - **点击特效**：互动反馈
+- **后台监控**：博客运行数据概览
+- **审核中心**：统一审核评论与访客说说
+- **访问记录**：记录访客访问行为，支持按 IP/页面筛选和去重显示
 
 ## 性能优化
 
@@ -92,10 +103,11 @@
 |----------|----------|
 | 代码分割 | 12+ 个重型组件（粒子特效、弹幕、播放器、轮播等）使用 `next/dynamic` 懒加载 |
 | 渲染优化 | `React.memo` 包裹列表项、`requestAnimationFrame` 滚动节流、搜索防抖 |
-| 请求优化 | 评论 API 30s 缓存 + `stale-while-revalidate`、天气 API 5 分钟缓存 |
-| ISR 增量更新 | 首页/列表页 10 分钟、文章详情/时间线 1 小时自动重新生成 |
+| 请求优化 | 评论 API 无缓存（实时数据）、天气 API 5 分钟缓存 |
+| ISR 增量更新 | 首页/列表页 10 分钟、文章详情 60 秒自动重新生成 |
 | 传输优化 | Gzip 压缩、静态资源 1 年强缓存、DNS 预解析 |
-| 图片优化 | 文章卡片和评论头像 `loading="lazy"` 懒加载 |
+| 图片优化 | 文章卡片和评论头像 `loading="lazy"` 懒加载，关键图片显式 `width`/`height` 消除 CLS |
+| 按需加载 | KaTeX CSS 仅在文章页加载，highlight.js 按需加载 18 种常用语言 |
 
 ## 项目结构
 
@@ -105,7 +117,8 @@ NoWin_Blog/
 │   ├── app/                  # 页面路由
 │   │   ├── about/            # 关于页
 │   │   ├── api/              # API 代理层
-│   │   │   ├── chat/         # AI 猫猫助理
+│   │   │   ├── analytics/    # 访问记录接口
+│   │   │   ├── announcements/# 公告接口
 │   │   │   ├── comments/     # 评论接口
 │   │   │   ├── guest-moments/# 访客说说接口
 │   │   │   └── weather/      # 天气接口
@@ -115,8 +128,10 @@ NoWin_Blog/
 │   │   ├── photowall/        # 照片墙
 │   │   ├── posts/            # 文章（列表 + 详情）
 │   │   ├── projects/         # 项目
+│   │   ├── steam/            # Steam 游戏库
 │   │   └── timeline/         # 时间线
 │   ├── components/           # UI 组件
+│   │   ├── AnnouncementModal.tsx    # 会话级公告弹窗
 │   │   ├── DynamicImports.tsx       # 全局重型组件懒加载入口
 │   │   ├── HomeDynamicImports.tsx   # 首页重型组件懒加载入口
 │   │   ├── DynamicComments.tsx      # 评论组件懒加载入口
@@ -126,51 +141,66 @@ NoWin_Blog/
 │   │   ├── SearchBar.tsx            # 搜索框（防抖优化）
 │   │   ├── VisitorMomentEditor.tsx  # 访客说说富文本编辑器
 │   │   ├── ThemeProvider.tsx        # 主题切换（默认日间模式）
-│   │   ├── CyberCat.tsx             # AI 猫猫助理
 │   │   ├── CloudPlayer.tsx          # 网易云音乐播放器
 │   │   ├── WeatherWidget.tsx        # 天气组件
 │   │   ├── DanmakuBackground.tsx    # 弹幕背景
-│   │   └── ...                      # 其他 UI 组件
-│   ├── data/                 # 数据文件（友链、图库、项目）
+│   │   ── ...                      # 其他 UI 组件
+│   ├── data/                 # 数据文件（友链、图库、项目、游戏库）
 │   ├── posts/                # 文章 Markdown 文件
+│   ├── moments/              # 博主说说 Markdown 文件
 │   ├── siteConfig.ts         # 站点配置
 │   ├── deploy.sh             # Linux 服务器一键部署脚本
 │   └── next.config.ts        # Next.js 配置（standalone + 压缩 + 缓存头）
 │
 ├── my-blog-manager/          # 后台管理器（Next.js 16 + Python FastAPI）
 │   ├── app/                  # 管理页面
+│   │   ├── about/            # 关于页面编辑
 │   │   ├── admin/            # 管理面板
+│   │   │   ├── analytics/    # 运行监控
+│   │   │   ├── announcements/# 公告管理
+│   │   │   ├── review/       # 审核中心（评论 + 访客说说）
+│   │   │   ├── view-records/ # 访问记录管理
+│   │   │   └── visitors/     # 访客管理
 │   │   ├── api/              # API 代理层
-│   │   │   ├── chat/         # AI 猫猫助理
+│   │   │   ├── analytics/    # 监控数据接口
 │   │   │   ├── comments/     # 评论管理接口
-│   │   │   └── guest-moments/# 访客说说管理接口
+│   │   │   ├── guest-moments/# 访客说说管理接口
+│   │   │   └── view-records/ # 访问记录接口
 │   │   ├── editor/           # 文章编辑器
-│   │   ├── moments/          # 说说管理（博主 + 访客混合展示）
+│   │   ├── friends/          # 友链管理
+│   │   ├── moments/          # 说说管理
 │   │   ├── posts/            # 文章管理
-│   │   ├── settings/         # 设置页面
+│   │   ├── projects/         # 项目管理
+│   │   ├── settings/         # 设置页面（7 个模块）
+│   │   ├── steam/            # Steam 游戏库管理
 │   │   └── ...               # 其他管理页面
 │   ├── components/
 │   │   ├── editor/           # 富文本编辑器（Tiptap）
-│   │   ├── settings/         # 设置模块
+│   │   ├── settings/         # 设置模块（7 个子组件）
 │   │   └── ...               # 其他组件
+│   ├── context/
+│   │   ── OperationContext.tsx  # 操作暂存队列
 │   ├── cms_core/             # Python 后端核心
 │   │   ├── api/              # API 路由
-│   │   │   ├── comments.py   # 评论 API
+│   │   │   ├── analytics.py      # 监控数据 + 访问记录 API
+│   │   │   ├── announcements.py  # 公告 CRUD API
+│   │   │   ├── comments.py       # 评论 API
 │   │   │   ├── guest_moments.py  # 访客说说 API
-│   │   │   ├── config.py     # 配置 API
-│   │   │   ├── drafts.py     # 草稿 API
-│   │   │   ├── friends.py    # 友链 API
-│   │   │   ├── gallery.py    # 图库 API
-│   │   │   ├── moments.py    # 说说 API
-│   │   │   ├── music.py      # 音乐 API
-│   │   │   ├── picbed.py     # 图床 API
-│   │   │   ├── projects.py   # 项目 API
-│   │   │   └── sync.py       # 同步 API
+│   │   │   ├── config.py         # 配置 API
+│   │   │   ├── drafts.py         # 草稿 API
+│   │   │   ├── friends.py        # 友链 API
+│   │   │   ├── gallery.py        # 图库 API
+│   │   │   ├── moments.py        # 说说 API
+│   │   │   ├── music.py          # 音乐 API
+│   │   │   ├── picbed.py         # 图床 API
+│   │   │   ├── projects.py       # 项目 API
+│   │   │   ├── steam.py          # Steam 游戏库 API
+│   │   │   └── sync.py           # 同步 API
 │   │   ├── database.py       # MongoDB 连接模块
-│   │   └── main.py           # FastAPI 入口
+│   │   ── main.py           # FastAPI 入口
 │   ├── posts/                # 文章 Markdown 文件（与前端同步）
-│   ├── data/                 # 数据存储
-│   │   └── deploy_config.json # 部署配置
+│   ├── moments/              # 博主说说 Markdown 文件（与前端同步）
+│   ├── data/                 # 数据存储（友链、图库、项目、游戏库）
 │   └── siteConfig.ts         # 管理端站点配置
 │
 └── Screenshot/               # 页面截图
@@ -185,17 +215,17 @@ NoWin_Blog/
 |------|------|
 | 前端框架 | Next.js 16（App Router + Turbopack） |
 | UI | React 19 + Tailwind CSS 4 + Framer Motion |
+| 图标 | Lucide React |
 | 富文本编辑 | Tiptap（StarterKit + Highlight + Underline + TextAlign 等） |
 | 后端 | Python FastAPI + Uvicorn |
-| 数据库 | MongoDB（评论 + 访客说说数据） |
+| 数据库 | MongoDB（评论 + 访客说说 + 公告数据） |
 | 头像 | Cravatar（Gravatar 国内镜像） |
-| AI | OpenAI 兼容接口（DeepSeek 等） |
 
 ## 环境要求
 
 - **Node.js** v18+（前端运行与构建）
 - **Python** 3.10+（后端 API 服务）
-- **MongoDB** 6.0+（评论与访客说说数据存储）
+- **MongoDB** 6.0+（评论、访客说说与公告数据存储）
 - **npm**（包管理器）
 
 ## 快速开始
@@ -207,8 +237,11 @@ NoWin_Blog/
 cd NWBlogs
 npm install
 
-# 后端 Python 依赖
+# 后台管理器依赖
 cd ../my-blog-manager
+npm install
+
+# 后端 Python 依赖
 pip install fastapi uvicorn python-multipart PyYAML markdown markdownify httpx requests pymongo
 ```
 
@@ -238,7 +271,6 @@ npm run build
 export MONGO_URI="mongodb://localhost:27017"
 export MONGO_DB_NAME="nowin_blog"
 export CMS_BACKEND_URL="http://127.0.0.1:8765"
-export GEMINI_API_KEY="你的key"   # AI 猫猫助理，可选
 
 # 启动
 chmod +x deploy.sh
@@ -276,7 +308,6 @@ npm run dev
 | `MONGO_URI` | MongoDB 连接地址 | `mongodb://localhost:27017` |
 | `MONGO_DB_NAME` | MongoDB 数据库名 | `nowin_blog` |
 | `CMS_BACKEND_URL` | Python 后端地址 | `http://127.0.0.1:8765` |
-| `GEMINI_API_KEY` | AI 猫猫助理 API 密钥 | 空 |
 | `PORT` | 前端端口号 | `3000` |
 
 ## 数据存储
@@ -287,7 +318,9 @@ npm run dev
 | 博主说说 | Markdown 文件 | `NWBlogs/moments/` 目录 |
 | 评论 | MongoDB | `comments` 集合 |
 | 访客说说 | MongoDB | `guest_moments` 集合 |
-| 友链/图库/项目 | TypeScript 数据文件 | `data/` 目录 |
+| 公告 | MongoDB | `announcements` 集合 |
+| 访问记录 | MongoDB | `page_views` 集合 |
+| 友链/图库/项目/游戏库 | TypeScript 数据文件 | `data/` 目录 |
 | 站点配置 | TypeScript 配置文件 | `siteConfig.ts` |
 
 ## 服务器部署（生产环境）
@@ -354,7 +387,6 @@ WorkingDirectory=/path/to/my-blog-manager
 ExecStart=/usr/bin/python3 -c "from cms_core.main import app; import uvicorn; uvicorn.run(app, host='0.0.0.0', port=8765)"
 Environment=MONGO_URI=mongodb://localhost:27017
 Environment=MONGO_DB_NAME=nowin_blog
-Environment=GEMINI_API_KEY=your_key
 Restart=always
 
 [Install]

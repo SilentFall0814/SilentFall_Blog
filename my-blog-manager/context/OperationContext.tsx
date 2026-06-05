@@ -1,17 +1,27 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-// 定义操作的类型
-export type OperationType = 'POST' | 'CONFIG' | 'GALLERY' | 'FRIEND';
+export type OperationType =
+  | 'POST'
+  | 'CONFIG'
+  | 'GALLERY'
+  | 'FRIEND'
+  | 'STEAM'
+  | 'sync_photowall'
+  | 'sync_friends'
+  | 'sync_projects'
+  | 'sync_steam'
+  | 'create_moment';
 
 export interface Operation {
   id: string;
   type: OperationType;
-  label: string;      // 显示在列表里的简短描述，如 "修改文章：GNN研究"
-  description: string; // 详细描述
+  label: string;
+  description?: string;
   timestamp: string;
-  payload: any;       // 实际要修改的数据内容
+  payload?: any;
+  value?: any;
 }
 
 interface OperationContextType {
@@ -26,7 +36,6 @@ const OperationContext = createContext<OperationContextType | undefined>(undefin
 export function OperationProvider({ children }: { children: React.ReactNode }) {
   const [operations, setOperations] = useState<Operation[]>([]);
 
-  // 添加操作（如果同类型的操作已存在，则覆盖，防止重复积攒）
   const addOperation = (op: Omit<Operation, 'id' | 'timestamp'>) => {
     const newOp: Operation = {
       ...op,
@@ -35,7 +44,6 @@ export function OperationProvider({ children }: { children: React.ReactNode }) {
     };
 
     setOperations(prev => {
-      // 如果是修改同一个文件，先过滤掉旧的，再加新的
       const filtered = prev.filter(item => !(item.type === op.type && item.label === op.label));
       return [...filtered, newOp];
     });
@@ -54,7 +62,6 @@ export function OperationProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// 导出 Hook 方便其他组件调用
 export const useOperations = () => {
   const context = useContext(OperationContext);
   if (!context) throw new Error("useOperations must be used within an OperationProvider");

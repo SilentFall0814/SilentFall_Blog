@@ -52,7 +52,7 @@ export default function PostsBoard({ posts: initialPosts }: { posts: Post[] }) {
       const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: deleteModal.slug })
+        body: JSON.stringify({ id: deleteModal.slug, title: deleteModal.title })
       });
       const data = await res.json();
       if (data.success) {
@@ -69,7 +69,7 @@ export default function PostsBoard({ posts: initialPosts }: { posts: Post[] }) {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-10 py-10 relative z-10">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-10 py-10 mt-20 relative z-10">
 
       <AnimatePresence>
         {deleteModal.isOpen && (

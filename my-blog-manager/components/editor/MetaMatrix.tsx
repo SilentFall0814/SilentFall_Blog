@@ -17,11 +17,14 @@ interface Props {
   isSaving: boolean;
   lastSaved: string | null;
   onOpenImageTool: () => void;
+  isSyncing?: boolean;
+  syncProgress?: string;
 }
 
 export default function MetaMatrix({
   type, tags, setTags, cover, setCover, summary, setSummary, mood, setMood,
-  allHistoryPostTags, allHistoryChatterTags, isLoadingTags, allHistoryMoods, onSave, isSaving, lastSaved, onOpenImageTool
+  allHistoryPostTags, allHistoryChatterTags, isLoadingTags, allHistoryMoods, onSave, isSaving, lastSaved, onOpenImageTool,
+  isSyncing = false, syncProgress = ""
 }: Props) {
   const [tagInput, setTagInput] = useState('');
   const currentHistoryTags = allHistoryPostTags;
@@ -154,20 +157,32 @@ export default function MetaMatrix({
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400">
             <Clock size={12} />
-            {isSaving ? "正在落盘至本地系统..." : lastSaved ? `最近落盘: ${lastSaved}` : "文档尚未在本地生成"}
+            {isSyncing ? (syncProgress || "正在同步到博客...") : isSaving ? "正在落盘至本地系统..." : lastSaved ? `最近落盘: ${lastSaved}` : "文档尚未在本地生成"}
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => onSave(false)} disabled={isSaving}
+              onClick={() => onSave(false)} disabled={isSaving || isSyncing}
               className="flex-1 py-3.5 bg-white/20 hover:bg-white/30 text-slate-800 dark:text-white font-black text-[10px] uppercase tracking-widest rounded-2xl border border-white/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 shadow-sm"
             >
               <Save size={14} /> 存为草稿
             </button>
             <button
-              onClick={() => onSave(true)} disabled={isSaving}
-              className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+              onClick={() => onSave(true)} disabled={isSaving || isSyncing}
+              className={`flex-1 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 ${
+                isSyncing
+                  ? 'bg-amber-500 shadow-amber-500/20'
+                  : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/20'
+              }`}
             >
-              <Send size={14} /> 正式发布
+              {isSyncing ? (
+                <>
+                  <span className="animate-spin">⏳</span> 发布并同步
+                </>
+              ) : (
+                <>
+                  <Send size={14} /> 正式发布
+                </>
+              )}
             </button>
           </div>
         </div>

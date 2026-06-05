@@ -30,7 +30,7 @@ function formatUpdateTime(dateString: string) {
   } catch { return dateString; }
 }
 
-function readMdDir(dirPath: string) {
+function readMdDir(dirPath: string, type: 'article' | 'moment' = 'article') {
   const items: any[] = [];
   try {
     if (fs.existsSync(dirPath)) {
@@ -39,10 +39,16 @@ function readMdDir(dirPath: string) {
         const fullPath = path.join(dirPath, fileName);
         const { data, content } = matter(fs.readFileSync(fullPath, 'utf8'));
         const rawDate = data.date || '1970-01-01';
+        // 说说如果没有标题，从内容中提取前20个字作为标题
+        let displayTitle = data.title;
+        if (!displayTitle && type === 'moment' && content) {
+          const plainText = content.replace(/[#*`~\-\[\]()!]/g, '').trim();
+          displayTitle = plainText.slice(0, 20) || '无内容';
+        }
         items.push({
           slug: fileName.replace(/\.md$/, ''),
           ...data,
-          title: data.title || '未命名文章',
+          title: displayTitle || (type === 'moment' ? '无标题说说' : '未命名文章'),
           description: data.description || '',
           content: content || '',
           date: rawDate,
@@ -69,7 +75,7 @@ export default function Home() {
 
   // 说说数据：moments 目录
   const momentsDirectory = path.join(process.cwd(), 'moments');
-  const allMoments = readMdDir(momentsDirectory);
+  const allMoments = readMdDir(momentsDirectory, 'moment');
   const top5Moments = allMoments.length > 0 ? allMoments.slice(0, 5) : [{ slug: 'none', title: '暂无说说', description: '记录一段思绪...', cover: siteConfig.defaultPostCover, date: '', formattedDate: '' }];
 
   const articleCount = allArticles.length;
@@ -113,7 +119,7 @@ export default function Home() {
 
                   {/* 照片墙大海报 */}
                   <Link href="/photowall" className="w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl overflow-hidden transition-all duration-700 hover:scale-[1.02] relative group min-h-[200px] sm:min-h-[220px] flex-shrink-0">
-                    <img src={latestAlbum.cover} className="w-full h-full absolute inset-0 object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"/>
+                    <img src={latestAlbum.cover} width={800} height={400} className="w-full h-full absolute inset-0 object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"/>
                     <div className="absolute inset-0 bg-black/30 dark:bg-black/50 group-hover:bg-black/10 transition-colors duration-500"></div>
                     <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 right-6">
                       <h3 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 underline decoration-pink-400">{latestAlbum.title}</h3>

@@ -83,6 +83,7 @@ export default function Comments() {
   const [content, setContent] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 
   const pageId = (pathname.replace(/\/$/, '') || '/').substring(0, 49);
@@ -116,8 +117,12 @@ export default function Comments() {
   }, [fetchComments]);
 
   const handleSubmit = async () => {
-    if (!author.trim() || !content.trim()) return;
+    if (!author.trim() || !content.trim()) {
+      setErrorMsg('昵称和内容不能为空');
+      return;
+    }
     setSubmitting(true);
+    setErrorMsg('');
     try {
       const res = await fetch('/api/comments', {
         method: 'POST',
@@ -136,9 +141,11 @@ export default function Comments() {
         setContent('');
         setReplyTo(null);
         fetchComments();
+      } else {
+        setErrorMsg(data.message || '提交失败');
       }
-    } catch {
-      console.error('提交评论失败');
+    } catch (e) {
+      setErrorMsg('网络错误，请稍后再试');
     } finally {
       setSubmitting(false);
     }
@@ -214,6 +221,10 @@ export default function Comments() {
               <span>回复 @{comments.find(c => c.id === replyTo)?.author || '某人'}</span>
               <button onClick={() => { setReplyTo(null); setContent(''); }} className="text-slate-400 hover:text-red-400">✕</button>
             </div>
+          )}
+
+          {errorMsg && (
+            <div className="mb-2 text-xs text-red-500 bg-red-500/10 rounded-lg px-3 py-2">{errorMsg}</div>
           )}
 
           <textarea

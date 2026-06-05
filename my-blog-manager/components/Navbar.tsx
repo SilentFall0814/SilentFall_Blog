@@ -1,21 +1,31 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOperations } from '../context/OperationContext';
 import { useToast } from './ToastProvider';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Home, Gamepad2, Image, Music, MessageSquare, FileText, Users, Info, Clock, ShieldCheck, Megaphone, BarChart3, Settings, Layers, Eye } from 'lucide-react';
 import { siteConfig } from '../siteConfig';
+
+interface NavGroup {
+  label: string;
+  icon: React.ReactNode;
+  items: { name: string; href: string; icon: React.ReactNode }[];
+}
 
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isOpBoxOpen, setIsOpBoxOpen] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
 
   const [syncModalOpen, setSyncModalOpen] = useState(false);
   const [targetBlogPath, setTargetBlogPath] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishProgress, setPublishProgress] = useState<string>("");
 
   const pathname = usePathname();
   const { operations, removeOperation, clearOperations } = useOperations();
@@ -53,21 +63,59 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  const navLinks = [
-    { name: '首页', href: '/' },
-    { name: '项目', href: '/projects' },
-    { name: '归档', href: '/timeline' },
-    { name: '照片墙', href: '/photowall' },
-    { name: '音乐', href: '/music' },
-    { name: '说说', href: '/moments' },
-    { name: '文章', href: '/posts' },
-    { name: '📝 草稿箱', href: '/drafts' },
-    { name: '友链', href: '/friends' },
-    { name: '关于', href: '/about' },
-    { name: '审核区', href: '/admin/review' },
-    { name: '监控', href: '/admin/analytics' },
-    { name: '⚙️ 设置', href: '/settings' },
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (groupRef.current && !groupRef.current.contains(e.target as Node)) {
+        setActiveGroup(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const navGroups: NavGroup[] = [
+    {
+      label: '内容',
+      icon: <Layers size={14} />,
+      items: [
+        { name: '首页', href: '/', icon: <Home size={14} /> },
+        { name: '文章', href: '/posts', icon: <FileText size={14} /> },
+        { name: '说说', href: '/moments', icon: <MessageSquare size={14} /> },
+        { name: '友链', href: '/friends', icon: <Users size={14} /> },
+        { name: '关于', href: '/about', icon: <Info size={14} /> },
+      ],
+    },
+    {
+      label: '展示',
+      icon: <Image size={14} />,
+      items: [
+        { name: '项目', href: '/projects', icon: <Layers size={14} /> },
+        { name: 'Steam', href: '/steam', icon: <Gamepad2 size={14} /> },
+        { name: '照片墙', href: '/photowall', icon: <Image size={14} /> },
+        { name: '音乐', href: '/music', icon: <Music size={14} /> },
+        { name: '归档', href: '/timeline', icon: <Clock size={14} /> },
+      ],
+    },
+    {
+      label: '管理',
+      icon: <ShieldCheck size={14} />,
+      items: [
+        { name: '审核区', href: '/admin/review', icon: <ShieldCheck size={14} /> },
+        { name: '公告', href: '/admin/announcements', icon: <Megaphone size={14} /> },
+        { name: '监控', href: '/admin/analytics', icon: <BarChart3 size={14} /> },
+        { name: '访客', href: '/admin/visitors', icon: <Users size={14} /> },
+        { name: '访问记录', href: '/admin/view-records', icon: <Eye size={14} /> },
+        { name: '设置', href: '/settings', icon: <Settings size={14} /> },
+      ],
+    },
   ];
+
+  const getCurrentGroupName = () => {
+    for (const group of navGroups) {
+      if (group.items.some(item => item.href === pathname)) return group.label;
+    }
+    return null;
+  };
 
   const handleMinimize = () => {
     if (typeof window !== 'undefined' && (window as any).pywebview?.api) {
@@ -85,7 +133,128 @@ export default function Navbar() {
     }
   };
 
-  // 🌟 监控增强版更新逻辑
+  /**
+   * 🌟 一键发布并同步：合并「更新本地」+「同步 Blog」为单步操作
+   * 流程：
+   * 1. 将操作队列发送到后端
+   * 2. 后端自动写入本地（草稿→MD文件等）
+   * 3. 后端自动同步到目标博客目录
+   * 4. 返回结果并刷新页面
+   */
+  const handlePublishAndSync = async () => {
+    if (operations.length === 0) {
+      showToast("队列中没有待处理的变更", "warning");
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishProgress("📦 正在准备发布...");
+
+    try {
+      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
+      const configData = await configRes.json();
+      const apiBase = `http://127.0.0.1:${configData.api_port}`;
+
+      // 将操作队列转换为后端期望的格式
+      const formattedOps = operations.map(op => {
+        let type = op.type;
+        let payload = op.payload || op.value;
+
+        // 映射前端操作类型到后端类型
+        switch (op.type) {
+          case 'sync_photowall':
+            type = 'sync_photowall';
+            payload = { albums: op.value };
+            break;
+          case 'sync_friends':
+            type = 'sync_friends';
+            payload = { friends: op.value };
+            break;
+          case 'sync_projects':
+            type = 'sync_projects';
+            payload = { projects: op.value };
+            break;
+          case 'sync_steam':
+            type = 'sync_steam';
+            payload = { games: op.value };
+            break;
+          case 'CONFIG':
+            type = 'CONFIG';
+            payload = { updates: op.payload };
+            break;
+          case 'create_moment':
+            type = 'create_moment';
+            payload = op.payload;
+            break;
+          default:
+            type = 'publish_article';
+            payload = { type: op.type, ...payload };
+            break;
+        }
+
+        return { type, payload };
+      });
+
+      // 阶段 1：写入本地
+      setPublishProgress("💾 正在保存本地...");
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const res = await fetch(`${apiBase}/api/sync/publish_and_sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operations: formattedOps,
+          blogPath: targetBlogPath
+        }),
+        // 设置超时，防止长时间挂起
+        signal: AbortSignal.timeout(60000)
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      if (data.success) {
+        // 阶段 2：同步完成
+        setPublishProgress("✅ 发布成功！正在刷新...");
+        showToast(`🎉 ${data.message}`, "success");
+        clearOperations();
+        setIsOpBoxOpen(false);
+
+        // 延迟刷新让用户看到成功提示
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        // 部分失败（本地成功但同步失败）
+        if (data.step === "sync_failed") {
+          setPublishProgress("⚠️ 本地已保存，同步失败");
+          showToast(
+            `✅ 数据已保存到本地\n❌ 同步失败：${data.sync_error || '未知错误'}\n💡 你可以稍后重试同步`,
+            "warning"
+          );
+          // 不清空操作队列，允许用户重试
+        } else {
+          setPublishProgress("❌ 发布失败");
+          showToast(`❌ ${data.message}`, "error");
+        }
+      }
+    } catch (error: any) {
+      setPublishProgress("❌ 网络异常");
+      if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+        showToast("⏱️ 网络连接超时，数据已保存至本地，请稍后重试同步", "error");
+      } else {
+        showToast(`🌐 发布异常：${error.message}`, "error");
+      }
+    } finally {
+      setIsPublishing(false);
+      setPublishProgress("");
+    }
+  };
+
+  // 保留旧方法以兼容（但不再在 UI 中显示）
   const handleUpdateLocal = async () => {
       if (operations.length === 0) {
         showToast("队列中没有待处理的操作", "warning");
@@ -116,11 +285,14 @@ export default function Navbar() {
               apiUrl = `${apiBase}/api/projects/sync`;
               body = { projects: op.value };
               break;
+            case 'sync_steam':
+              apiUrl = `${apiBase}/api/steam/sync`;
+              body = { games: op.value };
+              break;
             case 'CONFIG':
               apiUrl = `${apiBase}/api/config/update`;
               body = { updates: op.payload };
               break;
-            // 🌟 这是关键匹配逻辑
             case 'create_moment':
               apiUrl = `${apiBase}/api/moments/save`;
               body = op.payload;
@@ -139,9 +311,19 @@ export default function Navbar() {
             body: JSON.stringify(body)
           });
 
+          if (!res.ok) {
+            let errorMsg = `HTTP ${res.status}`;
+            try {
+              const errData = await res.json();
+              errorMsg += `: ${errData.message || errData.detail || JSON.stringify(errData)}`;
+            } catch {}
+            showToast(`❌ 任务执行失败: ${errorMsg}`, "error");
+            return;
+          }
+
           const data = await res.json();
           if (!data.success) {
-            showToast(`❌ 任务执行失败: ${data.message}`, "error");
+            showToast(`❌ 任务执行失败: ${data.message || data.detail || '未知错误'}`, "error");
             return;
           }
         }
@@ -155,7 +337,6 @@ export default function Navbar() {
         }, 2000);
 
       } catch (error: any) {
-        // 如果断网或报错，这里会强制提示
         showToast(`后端连接异常: ${error.message}`, "error");
       }
     };
@@ -207,14 +388,90 @@ export default function Navbar() {
             {siteConfig.navAfter}
           </Link>
 
-          <div className="flex items-center gap-6">
-            <nav className="hidden lg:flex gap-8 text-sm font-bold">
-              {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`relative py-1 transition-colors ${pathname === link.href ? 'text-indigo-600' : 'text-slate-700 dark:text-slate-200'}`}>
-                  {link.name}
-                </Link>
-              ))}
+          <div className="flex items-center gap-4">
+            {/* 桌面端分组导航 */}
+            <nav className="hidden lg:flex items-center gap-1" ref={groupRef}>
+              {navGroups.map((group) => {
+                const isActive = group.items.some(item => item.href === pathname);
+                const isExpanded = activeGroup === group.label;
+
+                return (
+                  <div key={group.label} className="relative">
+                    <button
+                      onClick={() => setActiveGroup(isExpanded ? null : group.label)}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all ${isActive ? 'text-indigo-600 bg-indigo-500/10' : 'text-slate-600 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-slate-800/40'}`}
+                    >
+                      {group.icon}
+                      <span>{group.label}</span>
+                      <ChevronDown size={12} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-full left-0 mt-2 w-44 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/40 dark:border-slate-700/60 rounded-2xl shadow-2xl p-2 z-50"
+                        >
+                          {group.items.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setActiveGroup(null)}
+                              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${pathname === item.href ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
+                            >
+                              {item.icon}
+                              <span>{item.name}</span>
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
             </nav>
+
+            {/* 移动端/平板端：当前页面标识 + 下拉 */}
+            <div className="lg:hidden relative" ref={groupRef}>
+              <button
+                onClick={() => setActiveGroup(activeGroup ? null : 'mobile')}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/20 dark:border-white/10 text-sm font-bold text-slate-700 dark:text-slate-200"
+              >
+                {navGroups.flatMap(g => g.items).find(item => item.href === pathname)?.name || '导航'}
+                <ChevronDown size={12} className={`transition-transform duration-200 ${activeGroup === 'mobile' ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {activeGroup === 'mobile' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                    className="absolute top-full right-0 mt-2 w-56 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/40 dark:border-slate-700/60 rounded-2xl shadow-2xl p-3 z-50 max-h-[70vh] overflow-y-auto"
+                  >
+                    {navGroups.map((group) => (
+                      <div key={group.label} className="mb-3 last:mb-0">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 mb-1.5">{group.label}</p>
+                        {group.items.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setActiveGroup(null)}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${pathname === item.href ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
+                          >
+                            {item.icon}
+                            <span>{item.name}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <div className="relative">
               <button onClick={() => setIsOpBoxOpen(!isOpBoxOpen)} className="relative w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 flex items-center justify-center text-lg hover:scale-105 transition-all border border-white/20 shadow-sm cursor-pointer">
@@ -253,20 +510,35 @@ export default function Navbar() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <button onClick={handleSyncBlogClick} className="py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                        🔄 同步 Blog
-                      </button>
-                      <button onClick={handleUpdateLocal} className="py-2.5 rounded-xl bg-indigo-500 text-white text-xs font-black shadow-lg shadow-indigo-500/30 hover:bg-indigo-600 transition-colors">
-                        🚀 更新本地
-                      </button>
+                    <div className="flex flex-col gap-2">
+                      {isPublishing ? (
+                        <button
+                          disabled
+                          className="py-3 rounded-xl bg-indigo-500/50 text-white text-xs font-black shadow-lg cursor-wait flex items-center justify-center gap-2"
+                        >
+                          <span className="animate-spin">⏳</span>
+                          {publishProgress || "正在发布..."}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handlePublishAndSync}
+                          className="py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-black shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all flex items-center justify-center gap-2"
+                        >
+                          🚀 发布变更
+                          {operations.length > 0 && (
+                            <span className="bg-white/20 px-1.5 py-0.5 rounded-md text-[10px]">
+                              {operations.length} 项
+                            </span>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            <div className="flex items-center gap-2 ml-2 pl-6 border-l border-slate-300/50 dark:border-slate-600/50">
+            <div className="flex items-center gap-2 ml-2 pl-4 border-l border-slate-300/50 dark:border-slate-600/50">
               <button onClick={handleMinimize} className="w-3.5 h-3.5 rounded-full bg-yellow-400 hover:bg-yellow-500 flex items-center justify-center group transition-colors shadow-sm cursor-pointer z-[101]">
                 <span className="opacity-0 group-hover:opacity-100 text-[8px] text-yellow-900 font-black">-</span>
               </button>

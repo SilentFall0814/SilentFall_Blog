@@ -41,7 +41,7 @@ export default function PostsPage() {
   }
 
   return (
-    <div className="min-h-screen relative pb-10">
+    <div className="min-h-screen relative pb-10 pt-20">
       <Navbar />
       <PageTransition>
         <PostsBoard posts={posts} />
