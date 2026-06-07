@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOperations } from '../../context/OperationContext';
 import { siteConfig } from '../../siteConfig';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
@@ -17,9 +16,9 @@ import DanmakuSection from '../../components/settings/DanmakuSection';
 import FooterSection from '../../components/settings/FooterSection';
 
 function SettingsContent() {
-  const { operations, addOperation } = useOperations();
   const [activeTab, setActiveTab] = useState('profile');
   const { showToast } = useToast();
+  const [syncing, setSyncing] = useState(false);
 
   const [formData, setFormData] = useState<any>({
     authorName: siteConfig.authorName || "",
@@ -51,10 +50,7 @@ function SettingsContent() {
   useEffect(() => {
     const fetchRealConfig = async () => {
       try {
-        const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-        const configData = await configRes.json();
-
-        const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/config/get`, { cache: 'no-store' });
+        const res = await fetch('/api/config?path=get', { cache: 'no-store' });
         const data = await res.json();
 
         if (data.success && data.data) {
@@ -62,7 +58,7 @@ function SettingsContent() {
           setFormData((prev: any) => ({
             ...prev,
             ...data.data,
-            useLocalPicBed: data.data.useLocalPicBed ?? prev.useLocalPicBed, // 👈 显式更新
+            useLocalPicBed: data.data.useLocalPicBed ?? prev.useLocalPicBed,
             social: { ...(prev.social || {}), ...(data.data.social || {}) },
             danmakuList: data.data.danmakuList ? [...data.data.danmakuList] : prev.danmakuList,
             buildDate: data.data.buildDate || prev.buildDate,
@@ -88,9 +84,7 @@ function SettingsContent() {
 
   const fetchMusicDetail = async (id: string) => {
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/music/query/${id}`, { cache: 'no-store' });
+      const res = await fetch(`/api/music?id=${id}`, { cache: 'no-store' });
       const data = await res.json();
       return data.success ? data.data : { error: true, id, name: "查询失败或无版权" };
     } catch (error) {
@@ -159,18 +153,52 @@ function SettingsContent() {
     }
   };
 
-  const pushToQueue = (label: string, key?: string, value?: any) => {
-    addOperation({
-      id: Date.now().toString(),
-      type: 'CONFIG',
-      label: `配置暂存：${label}`,
-      description: `修改了系统的 ${label}，等待同步至 my-blog`,
-      timestamp: new Date().toLocaleTimeString().slice(0, 5),
-      payload: formData,
-      key: key,
-      value: value
-    });
-    showToast(`🎉 【${label}】已加入右上角操作队列！`, "success");
+  const pushToQueue = async (label: string, key?: string, value?: any) => {
+    if (syncing) {
+      showToast("⏳ 正在同步中，请稍候...", "warning");
+      return;
+    }
+    setSyncing(true);
+    showToast(`💾 正在同步【${label}】到博客...`, "info");
+
+    try {
+      // 构建要更新的配置数据
+      const updates = key && value !== undefined ? { [key]: value } : { ...formData };
+
+      // 获取博客路径
+      const syncConfigRes = await fetch('/api/sync?path=config');
+      let blogPath = "";
+      if (syncConfigRes.ok) {
+        const syncConfigData = await syncConfigRes.json();
+        blogPath = syncConfigData.blogPath || "";
+      }
+
+      // 调用 publish_and_sync 自动同步
+      const res = await fetch('/api/sync?path=publish_and_sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operations: [{
+            type: "CONFIG",
+            payload: updates
+          }],
+          blogPath
+        }),
+        signal: AbortSignal.timeout(60000)
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🎉 【${label}】已自动同步到博客！`, "success");
+      } else {
+        showToast(`⚠️ 同步遇到问题：${data.message || '未知错误'}`, "error");
+      }
+    } catch (error) {
+      console.error("自动同步失败:", error);
+      showToast(`❌ 同步失败，请检查后端服务是否运行`, "error");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const menuItems = [
@@ -188,12 +216,12 @@ function SettingsContent() {
       <Navbar />
 
       <PageTransition>
-        <main className="w-[95%] max-w-7xl mx-auto mt-24 flex flex-col md:flex-row gap-8 items-start relative z-10">
+        <main className="w-[95%] max-w-7xl mx-auto mt-24 flex flex-col md:flex-row gap-8 items-start relative z-10 settings-layout">
 
-          <div className="w-full md:w-72 shrink-0 flex flex-col gap-4">
+          <div className="w-full md:w-72 shrink-0 flex flex-col gap-4 settings-sidebar">
             <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/50 dark:border-slate-800/50 rounded-3xl p-4 shadow-xl">
               <p className="text-[10px] font-black text-slate-400 uppercase mb-4 ml-2 tracking-widest">系统管理维度</p>
-              <nav className="flex flex-col gap-2">
+              <nav className="flex flex-col gap-2 settings-nav">
                 {menuItems.map((item) => (
                   <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 font-bold text-sm ${activeTab === item.id ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 translate-x-1' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}>
                     <span>{item.icon}</span>{item.name}

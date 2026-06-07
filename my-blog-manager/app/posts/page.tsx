@@ -6,7 +6,7 @@ import PageTransition from '../../components/PageTransition';
 import PostsBoard from './PostsBoard';
 
 export const metadata = {
-  title: "文章 | NoWin の 博客",
+  title: "文章 | SilentFall の 博客",
   description: "日常碎片与灵感记录",
 };
 

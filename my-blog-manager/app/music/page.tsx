@@ -151,7 +151,7 @@ export default function MusicPage() {
       <PageTransition>
         <div className="w-full max-w-7xl mx-auto mt-28 px-4 sm:px-10 relative z-10">
           <div className="animate-fade-in-up mb-10">
-            <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-widest mb-2 transition-colors duration-700">云端乐律</h1>
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-widest mb-1 md:mb-2 transition-colors duration-700">云端乐律</h1>
             <p className="text-slate-600 dark:text-slate-400 font-medium tracking-wider transition-colors duration-700">在代码的缝隙中寻找灵魂的共鸣</p>
           </div>
 

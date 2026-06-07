@@ -3,7 +3,7 @@ import PageTransition from '../../../components/PageTransition';
 import AnnouncementsBoard from './AnnouncementsBoard';
 
 export const metadata = {
-  title: "公告管理 | NoWin の 博客",
+  title: "公告管理 | SilentFall の 博客",
   description: "博客公告管理",
 };
 

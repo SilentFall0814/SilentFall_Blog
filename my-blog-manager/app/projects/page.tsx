@@ -3,7 +3,7 @@ import PageTransition from '../../components/PageTransition';
 import ProjectsBoard from './ProjectsBoard';
 
 export const metadata = {
-  title: "项目矩阵 | NoWin の 博客",
+  title: "项目矩阵 | SilentFall の 博客",
   description: "开源项目与代码仓库展示",
 };
 

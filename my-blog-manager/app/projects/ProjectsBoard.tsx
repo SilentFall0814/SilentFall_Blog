@@ -5,12 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../../components/BackButton';
 import { projectsData as initialProjects, Project } from '../../data/projects';
 import { Plus, Pencil, Trash2, AlertTriangle, Save, Edit3, X, Sparkles, Code2 } from 'lucide-react';
-import { useOperations } from '../../context/OperationContext';
 import { useToast } from '../../components/ToastProvider';
 
 export default function ProjectsBoard() {
-  const { addOperation } = useOperations();
   const { showToast } = useToast();
+  const [syncing, setSyncing] = useState(false);
 
   // 1. 核心状态
   const [editableProjects, setEditableProjects] = useState<Project[]>(initialProjects);
@@ -31,15 +30,50 @@ export default function ProjectsBoard() {
     );
   }, [searchQuery, editableProjects]);
 
-  // --- 核心逻辑：加入暂存队列 ---
-  const syncToQueue = (nextList: Project[]) => {
-    addOperation({
-      id: `sync_projects_${Date.now()}`,
-      type: "sync_projects",
-      label: "同步项目矩阵变更",
-      value: nextList
-    });
-    showToast("📍 变更已加入待处理队列，请在 Navbar 点击更新本地", "info");
+  // --- 核心逻辑：自动同步到博客 ---
+  const autoSyncProjects = async (nextList: Project[]) => {
+    if (syncing) {
+      showToast("⏳ 正在同步中，请稍候...", "warning");
+      return;
+    }
+    setSyncing(true);
+    showToast("💾 正在同步项目变更到博客...", "info");
+
+    try {
+      // 获取博客路径
+      const syncConfigRes = await fetch('/api/sync?path=config');
+      let blogPath = "";
+      if (syncConfigRes.ok) {
+        const syncConfigData = await syncConfigRes.json();
+        blogPath = syncConfigData.blogPath || "";
+      }
+
+      // 调用 publish_and_sync 自动同步
+      const res = await fetch('/api/sync?path=publish_and_sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operations: [{
+            type: "sync_projects",
+            payload: nextList
+          }],
+          blogPath
+        }),
+        signal: AbortSignal.timeout(60000)
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast("🎉 项目变更已自动同步到博客！", "success");
+      } else {
+        showToast(`⚠️ 同步遇到问题：${data.message || '未知错误'}`, "error");
+      }
+    } catch (error) {
+      console.error("项目自动同步失败:", error);
+      showToast("❌ 同步失败，请检查后端服务是否运行", "error");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleSaveProject = () => {
@@ -65,7 +99,7 @@ export default function ProjectsBoard() {
       next = editableProjects.map(p => p.id === data.id ? { ...p, ...data } as Project : p);
     }
     setEditableProjects(next);
-    syncToQueue(next);
+    autoSyncProjects(next);
     setProjectModal({ isOpen: false, mode: 'add', data: {} });
   };
 
@@ -73,7 +107,7 @@ export default function ProjectsBoard() {
     if (!deleteModal.id) return;
     const next = editableProjects.filter(p => p.id !== deleteModal.id);
     setEditableProjects(next);
-    syncToQueue(next);
+    autoSyncProjects(next);
     setDeleteModal({ isOpen: false, id: null, name: null });
   };
 
@@ -124,7 +158,7 @@ export default function ProjectsBoard() {
                </div>
                <div className="mt-8 flex gap-3">
                  <button onClick={() => setProjectModal({ ...projectModal, isOpen: false })} className="flex-1 py-3 text-slate-500 font-bold uppercase text-xs">取消</button>
-                 <button onClick={handleSaveProject} className="flex-1 py-4 bg-indigo-500 text-white rounded-2xl font-black shadow-lg flex items-center justify-center gap-2"><Save size={18} /> 加入暂存</button>
+                 <button onClick={handleSaveProject} className="flex-1 py-4 bg-indigo-500 text-white rounded-2xl font-black shadow-lg flex items-center justify-center gap-2"><Save size={18} /> 保存并同步</button>
                </div>
             </motion.div>
           </div>
@@ -135,7 +169,7 @@ export default function ProjectsBoard() {
       <div className="mb-8 flex flex-col items-center md:items-start">
         <div className="w-full flex justify-start mb-6"><BackButton /></div>
         <div className="text-center md:text-left w-full">
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-widest uppercase">Projects Matrix</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-widest uppercase">Projects Matrix</h1>
           <p className="text-slate-600 dark:text-slate-400 font-serif italic opacity-80 flex items-center justify-center md:justify-start gap-2">
             <Sparkles size={14} className="text-indigo-500" /> 开源项目、科研代码与实验室折腾记录
           </p>
@@ -150,7 +184,7 @@ export default function ProjectsBoard() {
         </div>
       </div>
 
-      <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+      <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-8 relative projects-grid">
 
         {/* 👇 新建项目虚线矩阵 */}
         <motion.div layout onClick={() => setProjectModal({ isOpen: true, mode: 'add', data: { icon: '🚀', tags: [] } })} className="group cursor-pointer flex flex-col items-center justify-center min-h-[320px] rounded-[40px] border-4 border-dashed border-slate-300 dark:border-slate-700 bg-white/10 hover:border-indigo-500 hover:bg-indigo-500/5 transition-all duration-500">

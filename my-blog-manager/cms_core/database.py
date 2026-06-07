@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from pymongo.collection import Collection
 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
-MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", "nowin_blog")
+MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", "silentfall_blog")
 
 _client: MongoClient | None = None
 

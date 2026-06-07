@@ -3,7 +3,7 @@ import PageTransition from '../../components/PageTransition';
 import SteamBoard from './SteamBoard';
 
 export const metadata = {
-  title: "Steam 游戏管理 | NoWin の 博客",
+  title: "Steam 游戏管理 | SilentFall の 博客",
   description: "Steam 游戏库后台管理",
 };
 

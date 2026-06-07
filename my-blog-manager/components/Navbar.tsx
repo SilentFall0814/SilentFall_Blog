@@ -45,7 +45,7 @@ export default function Navbar() {
           }
         }
       } catch (e) {
-        const path = localStorage.getItem('targetBlogPath') || "F:/Projects/my-blog";
+        const path = localStorage.getItem('targetBlogPath') || "[REDACTED_LOCAL_PATH]";
         setTargetBlogPath(path);
       }
     };
@@ -343,7 +343,7 @@ export default function Navbar() {
 
   const handleSyncBlogClick = () => {
     if (!targetBlogPath) {
-       const fallback = localStorage.getItem('targetBlogPath') || "F:/Projects/my-blog";
+       const fallback = localStorage.getItem('targetBlogPath') || "[REDACTED_LOCAL_PATH]";
        setTargetBlogPath(fallback);
     }
     setIsOpBoxOpen(false);
@@ -488,7 +488,7 @@ export default function Navbar() {
 
               <AnimatePresence>
                 {isOpBoxOpen && (
-                  <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-3 w-80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-4 z-50 cursor-default">
+                  <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-3 w-80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-4 z-50 cursor-default op-queue-dropdown">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">待处理操作</h3>
                       <button onClick={clearOperations} className="text-[10px] text-red-500 font-bold hover:underline">清空全部</button>
@@ -538,7 +538,7 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            <div className="flex items-center gap-2 ml-2 pl-4 border-l border-slate-300/50 dark:border-slate-600/50">
+            <div className="flex items-center gap-2 ml-2 pl-4 border-l border-slate-300/50 dark:border-slate-600/50 window-controls">
               <button onClick={handleMinimize} className="w-3.5 h-3.5 rounded-full bg-yellow-400 hover:bg-yellow-500 flex items-center justify-center group transition-colors shadow-sm cursor-pointer z-[101]">
                 <span className="opacity-0 group-hover:opacity-100 text-[8px] text-yellow-900 font-black">-</span>
               </button>
@@ -558,7 +558,7 @@ export default function Navbar() {
         {syncModalOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSyncModalOpen(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" />
-            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 p-10 text-center">
+            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 p-10 text-center sync-modal">
               <div className="w-16 h-16 bg-amber-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
                 <AlertTriangle className="text-amber-500" size={32} />
               </div>

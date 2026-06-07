@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
-import rehypeHighlight from 'rehype-highlight/lib/core';
+import rehypeHighlight from 'rehype-highlight';
 import rehypeStringify from 'rehype-stringify';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -124,7 +124,7 @@ export default async function Post({ params }: { params: { slug: string } }) {
         <main className="w-[95%] max-w-7xl mx-auto mt-28 flex flex-col lg:flex-row gap-10 items-start relative z-10">
           <article className="flex-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/50 dark:border-slate-800/50 rounded-[40px] p-8 md:p-16 shadow-2xl overflow-hidden relative">
             <header className="mb-12 border-b border-slate-300/30 dark:border-slate-700/50 pb-10 relative">
-              <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-8 tracking-tighter leading-tight pr-20">
+              <h1 className="text-2xl md:text-4xl lg:text-6xl font-black text-slate-900 dark:text-white mb-4 md:mb-8 tracking-tighter leading-tight pr-12 md:pr-20">
                 {postData.title}
               </h1>
 

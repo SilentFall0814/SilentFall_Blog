@@ -193,7 +193,7 @@ function ViewRecordsContent() {
           <div className="flex items-center gap-3 mb-8">
             <FileText size={28} className="text-violet-500" />
             <div>
-              <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter">访问记录</h1>
+              <h1 className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tighter">访问记录</h1>
               <p className="text-slate-500 text-sm mt-1 font-bold">浏览记录查询与管理</p>
             </div>
           </div>

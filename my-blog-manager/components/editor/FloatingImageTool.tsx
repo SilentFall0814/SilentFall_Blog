@@ -190,7 +190,7 @@ export default function FloatingImageTool({ isOpen, onClose, onInsert }: Floatin
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           style={{ position: 'fixed', top: '15vh', right: '5vw', zIndex: 99999 }}
-          className="w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-[32px] shadow-2xl border border-white/50 dark:border-white/10 overflow-hidden flex flex-col cursor-move"
+          className="w-[90vw] sm:w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-[32px] shadow-2xl border border-white/50 dark:border-white/10 overflow-hidden flex flex-col cursor-move"
         >
           {/* 标题栏 */}
           <div className="flex justify-between items-center p-5 border-b border-white/30 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50">

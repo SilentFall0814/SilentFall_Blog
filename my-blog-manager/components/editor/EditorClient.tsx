@@ -46,7 +46,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
           const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/get`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ blog_path: "F:/Projects/my-blog", id: currentDocId })
+            body: JSON.stringify({ blog_path: "[REDACTED_LOCAL_PATH]", id: currentDocId })
           });
           const data = await res.json();
           if (data.success) {
@@ -217,7 +217,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
         />
       </section>
 
-      <aside className="w-[360px] shrink-0 h-full bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden transition-all duration-700">
+      <aside className="w-full md:w-[360px] shrink-0 md:h-full bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[24px] md:rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden transition-all duration-700">
         <MetaMatrix
           type={docType}
           tags={tags} setTags={setTags}

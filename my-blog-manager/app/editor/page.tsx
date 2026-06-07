@@ -53,9 +53,7 @@ function EditorContent() {
     const fetchTags = async () => {
       setIsLoadingTags(true);
       try {
-        const configRes = await fetch(`/backend_config.json`);
-        const config = await configRes.json();
-        const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/all_tags`);
+        const res = await fetch(`/api/drafts?path=all_tags`);
         const data = await res.json();
         if (data.success) {
           setHistoryPostTags(data.postTags || []);
@@ -71,14 +69,11 @@ function EditorContent() {
     if (currentDocId !== 'new') {
       const loadDraft = async () => {
         try {
-          const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-          const config = await configRes.json();
-
-          const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/get`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: currentDocId, type: docType })
-          });
+        const res = await fetch(`/api/drafts?path=get`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentDocId, type: docType })
+        });
 
           const data = await res.json();
           if (data.success) {
@@ -135,12 +130,8 @@ function EditorContent() {
     setSyncProgress("💾 草稿已保存，正在同步到博客...");
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const apiBase = `http://127.0.0.1:${config.api_port}`;
-
       // 获取目标博客路径
-      const syncConfigRes = await fetch(`${apiBase}/api/sync/config`);
+      const syncConfigRes = await fetch(`/api/sync?path=config`);
       let blogPath = "";
       if (syncConfigRes.ok) {
         const syncConfigData = await syncConfigRes.json();
@@ -165,7 +156,7 @@ function EditorContent() {
 
       setSyncProgress("🚀 正在同步到博客目录...");
 
-      const res = await fetch(`${apiBase}/api/sync/publish_and_sync`, {
+      const res = await fetch(`/api/sync?path=publish_and_sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -225,9 +216,7 @@ function EditorContent() {
       // 🌟 正式发布：先保存到草稿系统，然后自动触发同步
       setIsSaving(true);
       try {
-        const configRes = await fetch(`/backend_config.json`);
-        const config = await configRes.json();
-        const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/save`, {
+        const res = await fetch(`/api/drafts?path=save`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -239,9 +228,9 @@ function EditorContent() {
           const syncOk = await handleAutoSyncAfterSave(payload);
 
           if (syncOk) {
-            // 同步成功，清空未保存标记
+            // 同步成功，清空未保存标记，自动退出编辑页面
             setHasUnsavedChanges(false);
-            if (shouldExitAfterSave) router.back();
+            setTimeout(() => router.back(), 800);
           } else {
             // 同步失败但本地保存成功，加入操作队列作为备选
             addOperation({
@@ -265,9 +254,7 @@ function EditorContent() {
     // 存为草稿（原有逻辑）
     setIsSaving(true);
     try {
-      const configRes = await fetch(`/backend_config.json`);
-      const config = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/save`, {
+      const res = await fetch(`/api/drafts?path=save`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
       const data = await res.json();
@@ -285,7 +272,7 @@ function EditorContent() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative">
+    <div className="h-screen w-screen relative overflow-hidden">
 
       <AnimatePresence>
         {exitModalOpen && (
@@ -406,7 +393,7 @@ function EditorContent() {
             </div>
           </main>
         ) : (
-          <main className="mx-auto w-[96%] max-w-[1750px] flex flex-row gap-6 relative" style={{ marginTop: '144px', height: 'calc(100vh - 144px - 32px)', marginBottom: '32px' }}>
+          <main className="mx-auto w-[96%] max-w-[1750px] flex flex-col md:flex-row gap-4 md:gap-6 relative" style={{ marginTop: '144px', height: 'calc(100vh - 144px - 32px)', marginBottom: '32px' }}>
 
             <button
               onClick={handleBackClick}
@@ -428,7 +415,7 @@ function EditorContent() {
               />
             </section>
 
-            <aside className="w-[360px] shrink-0 bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden">
+            <aside className="w-full md:w-[360px] shrink-0 bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[24px] md:rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden">
               <MetaMatrix
                 type={docType as any} tags={tags} setTags={setTags} cover={cover} setCover={setCover} summary={summary} setSummary={setSummary} mood={mood} setMood={setMood}
                 allHistoryPostTags={historyPostTags} allHistoryChatterTags={historyChatterTags} isLoadingTags={isLoadingTags}

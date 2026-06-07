@@ -30,7 +30,7 @@ DEPLOY_CONFIG_PATH = os.path.join(PROJECT_ROOT, "data", "deploy_config.json")
 def _read_blog_path() -> str:
     if os.path.exists(DEPLOY_CONFIG_PATH):
         try:
-            with open(DEPLOY_CONFIG_PATH, "r", encoding="utf-8") as f:
+            with open(DEPLOY_CONFIG_PATH, "r", encoding="utf-8-sig") as f:
                 cfg = json.load(f)
             return cfg.get("blogPath", "")
         except Exception:
@@ -85,7 +85,7 @@ def _sync_albums_local(albums_data: list):
     albums_ts_path = os.path.join(PROJECT_ROOT, "data", "albums.ts")
     json_str = json.dumps(albums_data, ensure_ascii=False, indent=2)
     ts_content = (
-        "// 🛡️ 本文件由 NoWin_Blog 控制台自动生成，请勿手动修改\n"
+        "// 🛡️ 本文件由 SilentFall_Blog 控制台自动生成，请勿手动修改\n"
         "export interface Photo { url: string; caption?: string; }\n"
         "export interface Album { id: string; title: string; description: string; cover: string; date: string; photos: Photo[]; }\n\n"
         f"export const albums: Album[] = {json_str};"
@@ -100,7 +100,7 @@ def _sync_friends_local(friends_list: list):
     friends_ts_path = os.path.join(PROJECT_ROOT, "data", "friends.ts")
     json_str = json.dumps(friends_list, ensure_ascii=False, indent=2)
     ts_content = (
-        "// 🛡️ 本文件由 NoWin_Blog 控制台自动生成\n"
+        "// 🛡️ 本文件由 SilentFall_Blog 控制台自动生成\n"
         "export interface Friend { name: string; url: string; avatar: string; description: string; }\n\n"
         f"export const friendsData: Friend[] = {json_str};"
     )

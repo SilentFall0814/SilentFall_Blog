@@ -8,7 +8,7 @@ import TimelineClient from '../../components/TimelineClient';
 import { projectsData } from '../../data/projects';
 
 export const metadata = {
-  title: "归档 | NoWin の 博客",
+  title: "归档 | SilentFall の 博客",
   description: "归档与探索，记录每一篇文章、项目与瞬间",
 };
 

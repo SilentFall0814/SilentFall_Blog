@@ -1,4 +1,4 @@
-# NoWin_Blog - 自托管个人博客系统
+# SilentFall_Blog - 自托管个人博客系统
 
 基于 [XHBlogs](https://github.com/heiehiehi/XinghuisamaBlogs) 二次开发，使用 Next.js 16 + Python FastAPI 构建的高颜值毛玻璃风格个人博客系统。**完全自托管，无需 GitHub/Vercel。**
 
@@ -112,8 +112,8 @@
 ## 项目结构
 
 ```
-NoWin_Blog/
-├── NWBlogs/                  # 博客前端（Next.js 16）
+SilentFall_Blog/
+├── SFBlogs/                  # 博客前端（Next.js 16）
 │   ├── app/                  # 页面路由
 │   │   ├── about/            # 关于页
 │   │   ├── api/              # API 代理层
@@ -234,11 +234,11 @@ NoWin_Blog/
 
 ```bash
 # 前端依赖
-cd NWBlogs
+cd SFBlogs
 npm install
 
 # 后台管理器依赖
-cd ../my-blog-manager
+cd my-blog-manager
 npm install
 
 # 后端 Python 依赖
@@ -263,13 +263,13 @@ brew services start mongodb-community
 **方式一：Linux 服务器一键部署**
 
 ```bash
-cd NWBlogs
+cd SFBlogs
 # 首次需要构建
 npm run build
 
 # 设置环境变量
 export MONGO_URI="mongodb://localhost:27017"
-export MONGO_DB_NAME="nowin_blog"
+export MONGO_DB_NAME="silentfall_blog"
 export CMS_BACKEND_URL="http://127.0.0.1:8765"
 
 # 启动
@@ -285,7 +285,7 @@ cd my-blog-manager
 python -c "from cms_core.main import app; import uvicorn; uvicorn.run(app, host='0.0.0.0', port=8765)"
 
 # 终端2：启动博客前端
-cd NWBlogs
+cd SFBlogs
 npm run dev
 
 # 终端3：启动后台管理器
@@ -306,7 +306,7 @@ npm run dev
 | 变量名 | 说明 | 默认值 |
 |--------|------|--------|
 | `MONGO_URI` | MongoDB 连接地址 | `mongodb://localhost:27017` |
-| `MONGO_DB_NAME` | MongoDB 数据库名 | `nowin_blog` |
+| `MONGO_DB_NAME` | MongoDB 数据库名 | `silentfall_blog` |
 | `CMS_BACKEND_URL` | Python 后端地址 | `http://127.0.0.1:8765` |
 | `PORT` | 前端端口号 | `3000` |
 
@@ -314,8 +314,8 @@ npm run dev
 
 | 数据类型 | 存储方式 | 说明 |
 |----------|----------|------|
-| 博客文章 | Markdown 文件 | `NWBlogs/posts/` 目录 |
-| 博主说说 | Markdown 文件 | `NWBlogs/moments/` 目录 |
+| 博客文章 | Markdown 文件 | `SFBlogs/posts/` 目录 |
+| 博主说说 | Markdown 文件 | `SFBlogs/moments/` 目录 |
 | 评论 | MongoDB | `comments` 集合 |
 | 访客说说 | MongoDB | `guest_moments` 集合 |
 | 公告 | MongoDB | `announcements` 集合 |
@@ -330,7 +330,7 @@ npm run dev
 ### 1. 构建
 
 ```bash
-cd NWBlogs
+cd SFBlogs
 npm run build
 ```
 
@@ -360,13 +360,13 @@ server {
 ### 3. 使用 systemd 管理服务（推荐）
 
 ```ini
-# /etc/systemd/system/nowin-blog-web.service
+# /etc/systemd/system/silentfall-blog-web.service
 [Unit]
-Description=NoWin_Blog Frontend
+Description=SilentFall_Blog Frontend
 After=network.target
 
 [Service]
-WorkingDirectory=/path/to/NWBlogs/.next/standalone
+WorkingDirectory=/path/to/SFBlogs/.next/standalone
 ExecStart=/usr/bin/node server.js
 Environment=HOSTNAME=0.0.0.0
 Environment=CMS_BACKEND_URL=http://127.0.0.1:8765
@@ -377,16 +377,16 @@ WantedBy=multi-user.target
 ```
 
 ```ini
-# /etc/systemd/system/nowin-blog-api.service
+# /etc/systemd/system/silentfall-blog-api.service
 [Unit]
-Description=NoWin_Blog Backend API
+Description=SilentFall_Blog Backend API
 After=network.target mongod.service
 
 [Service]
 WorkingDirectory=/path/to/my-blog-manager
 ExecStart=/usr/bin/python3 -c "from cms_core.main import app; import uvicorn; uvicorn.run(app, host='0.0.0.0', port=8765)"
 Environment=MONGO_URI=mongodb://localhost:27017
-Environment=MONGO_DB_NAME=nowin_blog
+Environment=MONGO_DB_NAME=silentfall_blog
 Restart=always
 
 [Install]
@@ -394,8 +394,8 @@ WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl enable nowin-blog-web nowin-blog-api
-sudo systemctl start nowin-blog-web nowin-blog-api
+sudo systemctl enable silentfall-blog-web silentfall-blog-api
+sudo systemctl start silentfall-blog-web silentfall-blog-api
 ```
 
 ## 许可协议

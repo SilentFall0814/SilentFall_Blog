@@ -138,7 +138,7 @@ export default function FriendsBoard() {
           <BackButton />
         </div>
         <div className="text-center md:text-left w-full">
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-widest drop-shadow-sm uppercase">云端引力</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-widest drop-shadow-sm uppercase">云端引力</h1>
           <p className="text-slate-600 dark:text-slate-400 font-serif">那些散落在赛博宇宙各处的有趣灵魂与神经节点。</p>
         </div>
       </div>

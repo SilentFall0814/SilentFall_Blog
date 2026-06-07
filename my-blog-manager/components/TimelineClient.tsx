@@ -87,7 +87,7 @@ export default function TimelineClient({ items }: TimelineClientProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-3"
+          className="text-2xl sm:text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-3"
         >
           归档与探索
         </motion.h1>

@@ -76,6 +76,8 @@ export default function Comments() {
       if (data.success) {
         localStorage.setItem('comment_user', JSON.stringify({ author, email }));
         setContent('');
+        setAuthor('');
+        setEmail('');
         setReplyTo(null);
         fetchComments();
       }
@@ -145,7 +147,7 @@ export default function Comments() {
             )}
             {c.content}
           </div>
-          <div className="flex items-center gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity comment-actions">
             <button
               onClick={() => handleLike(c.id)}
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 transition-colors"
@@ -182,7 +184,7 @@ export default function Comments() {
         </h3>
 
         <div className="bg-white/10 dark:bg-slate-800/30 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-2xl p-5 mb-6">
-          <div className="flex gap-3 mb-3">
+          <div className="flex gap-3 mb-3 comments-input-row">
             <input
               type="text"
               value={author}
@@ -194,7 +196,7 @@ export default function Comments() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="填写你的常用联系邮箱，没有或不方便则不填写"
+              placeholder="邮箱（选填）"
               className="flex-[2] bg-white/50 dark:bg-slate-900/50 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400 dark:text-slate-200"
             />
           </div>

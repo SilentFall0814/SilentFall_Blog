@@ -24,7 +24,7 @@ def _read_blog_path() -> str:
     """读取配置的目标博客路径"""
     if os.path.exists(DEPLOY_CONFIG_PATH):
         try:
-            with open(DEPLOY_CONFIG_PATH, "r", encoding="utf-8") as f:
+            with open(DEPLOY_CONFIG_PATH, "r", encoding="utf-8-sig") as f:
                 cfg = json.load(f)
             return cfg.get("blogPath", "")
         except Exception:

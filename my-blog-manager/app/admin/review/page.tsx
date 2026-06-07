@@ -17,7 +17,7 @@ function ReviewContent() {
       <PageTransition>
         <main className="w-[95%] max-w-7xl mx-auto mt-24 flex flex-col gap-8 relative z-10">
           <div>
-            <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter">
+            <h1 className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tighter">
               审核中心
             </h1>
             <p className="text-slate-500 text-sm mt-2 font-bold">管理全站内容审核与评论审核</p>

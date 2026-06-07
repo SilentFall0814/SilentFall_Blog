@@ -184,7 +184,7 @@ function VisitorsContent() {
           <div className="flex items-center gap-3 mb-8">
             <Users size={28} className="text-indigo-500" />
             <div>
-              <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter">访客管理</h1>
+              <h1 className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tighter">访客管理</h1>
               <p className="text-slate-500 text-sm mt-1 font-bold">查看访客列表、封禁/解封操作</p>
             </div>
           </div>

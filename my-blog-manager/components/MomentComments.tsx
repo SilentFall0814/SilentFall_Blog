@@ -68,6 +68,8 @@ export default function MomentComments({ id }: MomentCommentsProps) {
       if (data.success) {
         localStorage.setItem('comment_user', JSON.stringify({ author, email }));
         setContent('');
+        setAuthor('');
+        setEmail('');
         setReplyTo(null);
         setExpanded(false);
         fetchComments();
@@ -124,7 +126,7 @@ export default function MomentComments({ id }: MomentCommentsProps) {
         </button>
       ) : (
         <div className="space-y-2">
-          <div className="flex gap-2">
+          <div className="flex gap-2 moment-comment-inputs">
             <input
               type="text"
               value={author}

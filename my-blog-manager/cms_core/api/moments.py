@@ -27,7 +27,7 @@ def _sync_moments_to_user_end():
             print("[说说同步] 未找到部署配置，跳过同步")
             return
 
-        with open(deploy_config_path, "r", encoding="utf-8") as f:
+        with open(deploy_config_path, "r", encoding="utf-8-sig") as f:
             config = json.load(f)
 
         blog_path = config.get("blogPath", "")

@@ -90,7 +90,7 @@ export default function PostsBoard({ posts: initialPosts }: { posts: Post[] }) {
       </AnimatePresence>
 
       <div className="text-center mb-12">
-        <h1 className="text-5xl font-black text-slate-800 dark:text-white mb-4 tracking-tight">碎片记忆</h1>
+        <h1 className="text-2xl md:text-5xl font-black text-slate-800 dark:text-white mb-2 md:mb-4 tracking-tight">碎片记忆</h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium italic opacity-80 flex items-center justify-center gap-2">
           <Sparkles size={14} className="text-indigo-500" />
           " {siteConfig.chatterDescription || "日常碎片与灵感记录"} "

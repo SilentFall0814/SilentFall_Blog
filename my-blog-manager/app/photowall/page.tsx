@@ -226,7 +226,7 @@ export default function PhotoWallPage() {
             <div className="animate-fade-in-up">
               <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-6">
                 <div>
-                  <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-widest mb-2 transition-colors duration-700">光影画廊</h1>
+                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-widest mb-2 transition-colors duration-700">光影画廊</h1>
                   <p className="text-slate-600 dark:text-slate-400 font-medium tracking-wider transition-colors duration-700">定格时间，封存泰拉与现实的每一次心跳</p>
                 </div>
 
@@ -257,7 +257,7 @@ export default function PhotoWallPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-20 mt-10">
                   {!activeQuery && (
                     <div onClick={() => setAlbumModal({ isOpen: true, mode: 'add', data: {} })} className="group cursor-pointer flex flex-col items-center">
-                        <div className="relative w-[85%] aspect-[4/3] mb-8 border-4 border-dashed border-slate-300 dark:border-slate-700 rounded-[32px] flex flex-col items-center justify-center bg-white/10 dark:bg-white/5 hover:border-indigo-500 transition-all duration-500">
+                        <div className="relative w-full sm:w-[85%] aspect-[4/3] mb-8 border-4 border-dashed border-slate-300 dark:border-slate-700 rounded-[32px] flex flex-col items-center justify-center bg-white/10 dark:bg-white/5 hover:border-indigo-500 transition-all duration-500">
                           <Plus size={48} className="text-slate-400 group-hover:text-indigo-500 group-hover:rotate-90 transition-all duration-500" />
                           <span className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">创建新相册</span>
                         </div>
@@ -271,7 +271,7 @@ export default function PhotoWallPage() {
                          <button onClick={(e) => { e.stopPropagation(); setDeleteModal({ isOpen: true, type: 'album', id: album.id, title: album.title }); }} className="p-2.5 bg-red-500 text-white rounded-xl shadow-lg hover:scale-110 transition-transform"><Trash2 size={16}/></button>
                       </div>
 
-                      <div onClick={() => { setSearchQuery(''); setCurrentAlbum(album); }} className="relative w-[85%] aspect-[4/3] mb-8">
+                      <div onClick={() => { setSearchQuery(''); setCurrentAlbum(album); }} className="relative w-full sm:w-[85%] aspect-[4/3] mb-8">
                         <div className="absolute inset-0 bg-slate-300 dark:bg-slate-700 rounded-[4px] shadow-md transform rotate-6 translate-x-4 translate-y-2 group-hover:rotate-12 transition-all duration-500 border-[6px] border-white dark:border-slate-200 overflow-hidden opacity-60">
                            {album.photos[2] && <img src={album.photos[2].url} className="w-full h-full object-cover grayscale blur-[2px]" alt="" />}
                         </div>
@@ -303,7 +303,7 @@ export default function PhotoWallPage() {
                   <button onClick={() => setCurrentAlbum(null)} className="group flex items-center gap-1.5 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-500 mb-4 transition-colors">
                     <div className="bg-white/40 dark:bg-slate-800/50 p-1.5 rounded-lg border border-white/50 shadow-sm"><X size={16} /></div> 返回画廊
                   </button>
-                  <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-wider mb-2">{currentAlbum.title}</h1>
+                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-wider mb-2">{currentAlbum.title}</h1>
                 </div>
                 <button onClick={() => setAlbumModal({ isOpen: true, mode: 'edit', data: currentAlbum })} className="px-5 py-2.5 rounded-2xl bg-white/40 dark:bg-slate-800/40 border border-white/50 text-xs font-black uppercase text-indigo-500 hover:bg-white transition-all shadow-sm">相册属性</button>
               </div>

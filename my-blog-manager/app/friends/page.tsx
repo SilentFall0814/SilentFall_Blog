@@ -3,7 +3,7 @@ import PageTransition from '../../components/PageTransition';
 import FriendsBoard from './FriendsBoard';
 
 export const metadata = {
-  title: "友链 | NoWin の 博客",
+  title: "友链 | SilentFall の 博客",
   description: "赛博空间里的有趣灵魂",
 };
 

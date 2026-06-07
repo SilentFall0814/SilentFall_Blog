@@ -9,7 +9,7 @@ from cms_core.api import analytics
 from cms_core.api import steam
 from cms_core.api import announcements
 
-app = FastAPI(title="NoWin_Blog CMS Backend", version="1.0.0")
+app = FastAPI(title="SilentFall_Blog CMS Backend", version="1.0.0")
 
 # 🌟 核心修复：添加跨域中间件，彻底解决 Failed to fetch 报错
 app.add_middleware(

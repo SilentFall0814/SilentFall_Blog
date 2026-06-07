@@ -573,7 +573,7 @@ function AnalyticsContent() {
           {/* 页面标题 */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter">
+              <h1 className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tighter">
                 运行监控
               </h1>
               <p className="text-slate-500 text-sm mt-2 font-bold">

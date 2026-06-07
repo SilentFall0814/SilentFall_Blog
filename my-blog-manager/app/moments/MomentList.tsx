@@ -358,7 +358,7 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
     if (count === 1) {
       return (
         <div className="mt-8 flex justify-center w-full">
-          <div onClick={() => setLightbox({ images, index: 0 })} className="max-w-[280px] overflow-hidden rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-xl cursor-zoom-in group">
+          <div onClick={() => setLightbox({ images, index: 0 })} className="max-w-full sm:max-w-[280px] overflow-hidden rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-xl cursor-zoom-in group">
             <img src={images[0]} alt="moment" className="w-full h-auto max-h-[400px] object-contain group-hover:scale-105 transition-transform duration-500" />
           </div>
         </div>
@@ -366,7 +366,7 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
     }
 
     const columns = count === 4 ? 2 : 3;
-    const maxWidth = count === 4 ? '210px' : '320px';
+    const maxWidth = count === 4 ? '100%' : '100%';
 
     return (
       <div className="w-full flex justify-center mt-8">
@@ -463,7 +463,7 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
     <div className="w-[90%] max-w-6xl mx-auto py-10 mt-28 relative z-10 flex-1 flex flex-col min-h-[85vh]">
 
       <div className="mb-14 text-center relative">
-        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter">生活动态</motion.h1>
+        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl md:text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-tighter">生活动态</motion.h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium italic opacity-80 flex items-center justify-center gap-2">
           <Sparkles size={14} className="text-indigo-500" /> “ 在代码之外捕捉瞬间的温度 ”
         </p>

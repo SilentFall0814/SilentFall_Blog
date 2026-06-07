@@ -155,8 +155,8 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
   };
 
   return (
-    <main className="mx-auto w-[96%] max-w-[1750px] flex flex-row gap-6 z-10 relative" style={{ marginTop: '112px', height: 'calc(100vh - 112px - 32px)', marginBottom: '32px' }}>
-      <section className="flex-1 min-w-0 h-full bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden transition-all duration-700">
+    <main className="mx-auto w-[96%] max-w-[1750px] flex flex-col md:flex-row gap-4 md:gap-6 z-10 relative" style={{ marginTop: '112px', minHeight: 'calc(100vh - 112px - 32px)', marginBottom: '32px' }}>
+      <section className="flex-1 min-w-0 min-h-[500px] md:min-h-0 md:h-full bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[24px] md:rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden transition-all duration-700">
         <RichTextEditor
           ref={editorRef}
           title={title}
@@ -168,7 +168,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
         />
       </section>
 
-      <aside className="w-[360px] shrink-0 h-full bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden transition-all duration-700">
+      <aside className="w-full md:w-[360px] shrink-0 md:h-full bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[24px] md:rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden transition-all duration-700">
         <MetaMatrix
           type={docType}
           tags={tags} setTags={setTags}

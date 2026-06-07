@@ -21,7 +21,7 @@ const notoSerif = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "NoWin | Blog后台",
+  title: "SilentFall | Blog后台",
   description: "后台管理系统",
   icons: {
     icon: siteConfig.faviconUrl,
