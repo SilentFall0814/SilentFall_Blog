@@ -6,6 +6,7 @@ import RichTextEditor, { RichTextEditorHandle } from '../../components/editor/Ri
 import MetaMatrix from '../../components/editor/MetaMatrix';
 import FloatingImageTool from '../../components/editor/FloatingImageTool';
 import { useToast } from '../../components/ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: any) {
   const searchParams = useSearchParams();
@@ -45,16 +46,13 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
     if (docId !== 'new') {
       const loadDraft = async () => {
         try {
-          const configRes = await fetch('/backend_config.json');
-          const config = await configRes.json();
-          const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/get`, {
+          const res = await apiFetch(`/api/drafts?path=get`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ blog_path: blogPath || "[REDACTED_LOCAL_PATH]", id: docId })
+            body: JSON.stringify({ id: docId, type: docType })
           });
           const data = await res.json();
           if (data.success) {
-            // 如果是 about，依然强制覆盖标题
             setTitle(docType === 'about' ? '关于我' : (data.draft.title || ''));
             setTags(data.draft.tags || []);
             setCover(data.draft.cover || '');
@@ -90,9 +88,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
 
     try {
       // 先保存草稿到后端
-      const configRes = await fetch('/backend_config.json');
-      const config = await configRes.json();
-      const saveRes = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/save`, {
+      const saveRes = await apiFetch(`/api/drafts?path=save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,7 +113,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
 
       // 如果是发布，调用同步到本地
       if (isPublish) {
-        const syncRes = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/sync_local`, {
+        const syncRes = await apiFetch(`/api/drafts?path=sync_local`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

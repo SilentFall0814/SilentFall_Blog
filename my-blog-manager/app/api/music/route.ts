@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, buildBackendHeaders } from '../../../lib/backendProxy';
 
-const BACKEND_URL = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
-
-// GET /api/music — 代理到后端音乐查询接口
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const songId = searchParams.get('id') || '';
-    const res = await fetch(`${BACKEND_URL}/api/music/query/${songId}`, { cache: 'no-store' });
+    const res = await fetch(getBackendUrl('/api/music/query/' + songId), {
+      cache: 'no-store',
+      headers: buildBackendHeaders(req),
+    });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {

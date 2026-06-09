@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, buildBackendHeaders } from '../../../lib/backendProxy';
 
-const BACKEND_URL = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
-
-// GET /api/config — 代理到后端配置查询接口
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'get';
-    const res = await fetch(`${BACKEND_URL}/api/config/${path}`, { cache: 'no-store' });
+    const res = await fetch(getBackendUrl('/api/config/' + path), {
+      cache: 'no-store',
+      headers: buildBackendHeaders(req),
+    });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
@@ -16,17 +17,19 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/config — 代理到后端配置更新接口
 export async function POST(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'update';
     const body = await req.json();
-    const res = await fetch(`${BACKEND_URL}/api/config/${path}`, {
+    const res = await fetch(getBackendUrl('/api/config/' + path), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildBackendHeaders(req),
       body: JSON.stringify(body),
     });
+    if (res.status === 401) {
+      return NextResponse.json(await res.json(), { status: 401 });
+    }
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {

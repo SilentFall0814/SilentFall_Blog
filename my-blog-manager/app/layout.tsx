@@ -5,6 +5,7 @@ import { ThemeProvider } from "../components/ThemeProvider";
 import { MusicProvider } from "../components/MusicProvider";
 import { ToastProvider } from "../components/ToastProvider";
 import { OperationProvider } from "../context/OperationContext";
+import AuthGuard from "../components/AuthGuard";
 import { siteConfig } from "../siteConfig";
 import BackgroundSlider from "../components/BackgroundSlider";
 import DanmakuBackground from "../components/DanmakuBackground";
@@ -66,9 +67,11 @@ export default function RootLayout({
               </div>
 
               <OperationProvider>
-                <div className="relative z-10 flex-1 flex flex-col">
-                  {children}
-                </div>
+                <AuthGuard>
+                  <div className="relative z-10 flex-1 flex flex-col">
+                    {children}
+                  </div>
+                </AuthGuard>
               </OperationProvider>
 
               <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `

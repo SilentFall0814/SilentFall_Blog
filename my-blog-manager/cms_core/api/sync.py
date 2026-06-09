@@ -7,7 +7,8 @@ import yaml
 import markdown
 from markdownify import markdownify as md
 from datetime import datetime
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
@@ -365,10 +366,11 @@ def is_safe_blog_dir(target_path):
 
 
 @router.post("/check")
-async def check_blog_path(request: Request):
+async def check_blog_path(request: Request, _=Depends(get_current_admin)):
     """检测目标路径是否合法且具备基本结构"""
     try:
-        payload = await request.json()
+        raw_payload = await request.json()
+        payload = sanitize_payload(raw_payload)
         target_path = payload.get("blogPath", "").strip()
 
         if not target_path or not os.path.exists(target_path):
@@ -393,10 +395,11 @@ async def check_blog_path(request: Request):
 
 
 @router.post("/execute")
-async def execute_sync(request: Request):
+async def execute_sync(request: Request, _=Depends(get_current_admin)):
     """执行物理覆盖同步"""
     try:
-        payload = await request.json()
+        raw_payload = await request.json()
+        payload = sanitize_payload(raw_payload)
         target_path = payload.get("blogPath", "").strip()
 
         if not is_safe_blog_dir(target_path):
@@ -441,7 +444,7 @@ async def execute_sync(request: Request):
 
 
 @router.post("/publish_and_sync")
-async def publish_and_sync(request: Request):
+async def publish_and_sync(request: Request, _=Depends(get_current_admin)):
     """一键发布并同步：合并「更新本地」+「同步 Blog」为单步操作
     
     流程：
@@ -450,7 +453,8 @@ async def publish_and_sync(request: Request):
     3. 返回详细的执行结果
     """
     try:
-        payload = await request.json()
+        raw_payload = await request.json()
+        payload = sanitize_payload(raw_payload)
         operations = payload.get("operations", [])
         target_blog_path = payload.get("blogPath", "").strip()
 

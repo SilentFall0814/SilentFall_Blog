@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, buildBackendHeaders } from '../../../lib/backendProxy';
 
-const BACKEND_URL = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
-
-// GET /api/sync/config
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'config';
-    const res = await fetch(`${BACKEND_URL}/api/sync/${path}`, { cache: 'no-store' });
+    const res = await fetch(getBackendUrl('/api/sync/' + path), {
+      cache: 'no-store',
+      headers: buildBackendHeaders(req),
+    });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
@@ -16,18 +17,20 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/sync/publish_and_sync
 export async function POST(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'publish_and_sync';
     const body = await req.json();
-    const res = await fetch(`${BACKEND_URL}/api/sync/${path}`, {
+    const res = await fetch(getBackendUrl('/api/sync/' + path), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildBackendHeaders(req),
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(60000),
     });
+    if (res.status === 401) {
+      return NextResponse.json(await res.json(), { status: 401 });
+    }
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {

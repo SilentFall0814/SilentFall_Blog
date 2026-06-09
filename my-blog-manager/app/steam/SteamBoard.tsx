@@ -7,6 +7,7 @@ import { steamGamesData as initialGames, SteamGame, GameStatus } from '../../dat
 import { Plus, Pencil, Trash2, AlertTriangle, Save, Edit3, Gamepad2, Upload, Link } from 'lucide-react';
 import { useOperations } from '../../context/OperationContext';
 import { useToast } from '../../components/ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 import { siteConfig } from '../../siteConfig';
 
 const STATUS_OPTIONS: { value: GameStatus; label: string }[] = [
@@ -86,20 +87,18 @@ export default function SteamBoard() {
     showToast(isLocal ? "正在上传封面..." : "正在上传至云端...", "info");
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
       const uploadData = new FormData();
       uploadData.append('file', file);
 
-      let endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload_local`;
+      let endpoint = '/api/picbed?path=upload_local';
 
       if (!isLocal) {
-        endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload`;
+        endpoint = '/api/picbed?path=upload';
         uploadData.append('url', picUrl);
         uploadData.append('token', picToken);
       }
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: 'POST',
         body: uploadData,
       });

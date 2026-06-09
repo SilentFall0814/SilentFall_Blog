@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 import requests
+from cms_core.security import get_current_admin
 
 router = APIRouter()
 

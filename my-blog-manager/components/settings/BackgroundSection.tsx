@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function BackgroundSection({ formData, handleUpdate, pushToQueue }: any) {
   const { showToast } = useToast();
@@ -51,23 +52,20 @@ export default function BackgroundSection({ formData, handleUpdate, pushToQueue 
     showToast(isLocal ? "正在上传到本地..." : "正在将图片传送至图床引擎...", "info");
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
-
       // 构建 multipart/form-data
       const uploadData = new FormData();
       uploadData.append('file', file);
       
-      let endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload`;
+      let endpoint = '/api/picbed?path=upload';
       
       if (isLocal) {
-        endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload_local`;
+        endpoint = '/api/picbed?path=upload_local';
       } else {
         uploadData.append('url', picUrl);
         uploadData.append('token', picToken);
       }
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: 'POST',
         body: uploadData,
       });

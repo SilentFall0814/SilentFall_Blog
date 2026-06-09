@@ -3,9 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
 
-  // 允许局域网设备访问开发服务器
-  allowedDevOrigins: ['192.168.1.7'],
-
   images: {
     unoptimized: true,
   },

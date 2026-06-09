@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Trash2, Eye, EyeOff, CheckCircle, MessageSquare, RefreshCw } from 'lucide-react';
+import { apiFetch } from '../../lib/apiFetch';
 
 interface Comment {
   id: string;
@@ -29,10 +30,8 @@ export default function CommentSection() {
   const fetchComments = async () => {
     setLoading(true);
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const res = await fetch(
-        `http://127.0.0.1:${config.api_port}/api/comments/all?page=${page}&page_size=${pageSize}&status=${filter}`
+      const res = await apiFetch(
+        `/api/comments/all?page=${page}&page_size=${pageSize}&status=${filter}`
       );
       const data = await res.json();
       if (data.success) {
@@ -48,9 +47,7 @@ export default function CommentSection() {
 
   const fetchStats = async () => {
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${config.api_port}/api/comments/stats`);
+      const res = await apiFetch('/api/comments/stats');
       const data = await res.json();
       if (data.success) setStats(data.data);
     } catch {}
@@ -63,9 +60,7 @@ export default function CommentSection() {
 
   const handleStatus = async (id: string, status: string) => {
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${config.api_port}/api/comments/status/${id}`, {
+      const res = await apiFetch(`/api/comments/status/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -81,9 +76,7 @@ export default function CommentSection() {
   const handleDelete = async (id: string) => {
     if (!confirm('确定要删除这条评论吗？此操作不可恢复！')) return;
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${config.api_port}/api/comments/${id}`, {
+      const res = await apiFetch(`/api/comments/${id}`, {
         method: 'DELETE',
       });
       const data = await res.json();

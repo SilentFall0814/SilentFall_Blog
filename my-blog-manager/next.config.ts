@@ -1,22 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 【核心开关】：告诉 Next.js 放弃 Node.js，打包成纯静态的 HTML/CSS/JS
+  // 生成独立部署的 Node.js 服务器（standalone 模式）
   output: 'standalone',
 
-  // 允许局域网设备访问开发服务器
-  allowedDevOrigins: ['192.168.1.7'],
-
-  // 【必须项】：因为没有 Node.js 服务器了，Next.js 自带的图片压缩服务会失效，必须关闭它
+  // 【必须项】：standalone 模式下 Next.js 自带的图片压缩服务不可用，必须关闭
   images: {
     unoptimized: true,
   },
-  // 👇 终极大招 1：屏蔽所有 TypeScript 类型报错！
+  // 屏蔽 TypeScript 类型报错
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // 👇 终极大招 2：顺手把 ESLint 语法检查也屏蔽了，防止它出来捣乱！
+  // 屏蔽 ESLint 语法检查
   eslint: {
     ignoreDuringBuilds: true,
   },

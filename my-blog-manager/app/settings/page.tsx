@@ -6,6 +6,7 @@ import { siteConfig } from '../../siteConfig';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import { ToastProvider, useToast } from '../../components/ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 
 import ProfileSection from '../../components/settings/ProfileSection';
 import BackgroundSection from '../../components/settings/BackgroundSection';
@@ -50,7 +51,7 @@ function SettingsContent() {
   useEffect(() => {
     const fetchRealConfig = async () => {
       try {
-        const res = await fetch('/api/config?path=get', { cache: 'no-store' });
+        const res = await apiFetch('/api/config?path=get', { cache: 'no-store' });
         const data = await res.json();
 
         if (data.success && data.data) {
@@ -84,7 +85,7 @@ function SettingsContent() {
 
   const fetchMusicDetail = async (id: string) => {
     try {
-      const res = await fetch(`/api/music?id=${id}`, { cache: 'no-store' });
+      const res = await apiFetch(`/api/music?id=${id}`, { cache: 'no-store' });
       const data = await res.json();
       return data.success ? data.data : { error: true, id, name: "查询失败或无版权" };
     } catch (error) {
@@ -166,7 +167,7 @@ function SettingsContent() {
       const updates = key && value !== undefined ? { [key]: value } : { ...formData };
 
       // 获取博客路径
-      const syncConfigRes = await fetch('/api/sync?path=config');
+      const syncConfigRes = await apiFetch('/api/sync?path=config');
       let blogPath = "";
       if (syncConfigRes.ok) {
         const syncConfigData = await syncConfigRes.json();
@@ -174,9 +175,8 @@ function SettingsContent() {
       }
 
       // 调用 publish_and_sync 自动同步
-      const res = await fetch('/api/sync?path=publish_and_sync', {
+      const res = await apiFetch('/api/sync?path=publish_and_sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operations: [{
             type: "CONFIG",

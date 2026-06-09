@@ -2,10 +2,11 @@ import os
 import re
 import json
 import shutil
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 from cms_core.database import get_comments_collection
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
@@ -80,42 +81,41 @@ def _make_moment_filename(content: str, moment_id: str) -> str:
 
 
 @router.post("/save")
-def save_moment(payload: MomentPayload):
+def save_moment(payload: MomentPayload, _=Depends(get_current_admin)):
     try:
-        # 🌟 绝对路径修复魔法 🌟
-        # 1. 获取当前 moments.py 文件所在的绝对路径 (也就是 cms_core/api 目录)
+        moment_id = sanitize_nosql_field(payload.id, max_length=100)
+        moment_content = sanitize_nosql_field(payload.content, max_length=5000)
+        moment_date = sanitize_nosql_field(payload.date, max_length=50)
+        moment_location = sanitize_nosql_field(payload.location or "", max_length=100)
+        moment_images = [sanitize_nosql_field(img, max_length=500) for img in payload.images]
+
         current_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # 2. 往上退两级，定位到你的博客管理端根目录 (my-blog-manager)
         project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
-
-        # 3. 🎯 精准指向你指定的 moments 文件夹！
         MOMENTS_DIR = os.path.join(project_root, "moments")
 
         if not os.path.exists(MOMENTS_DIR):
             os.makedirs(MOMENTS_DIR, exist_ok=True)
 
-        # 4. 使用说说内容前几个字作为文件名
-        filename = _make_moment_filename(payload.content, payload.id)
+        filename = _make_moment_filename(moment_content, moment_id)
         file_path = os.path.join(MOMENTS_DIR, f"{filename}.md")
 
         # 构造 Markdown Front-matter
         frontmatter_lines = ["---"]
-        frontmatter_lines.append(f'id: "{payload.id}"')
-        frontmatter_lines.append(f'date: "{payload.date}"')
+        frontmatter_lines.append(f'id: "{moment_id}"')
+        frontmatter_lines.append(f'date: "{moment_date}"')
 
-        if payload.location:
-            frontmatter_lines.append(f'location: "{payload.location}"')
+        if moment_location:
+            frontmatter_lines.append(f'location: "{moment_location}"')
 
-        if payload.images:
+        if moment_images:
             frontmatter_lines.append("images:")
-            for img in payload.images:
+            for img in moment_images:
                 frontmatter_lines.append(f"  - '{img}'")
 
         frontmatter_lines.append("---")
         frontmatter_lines.append("")  # 留一个空行
 
-        file_content = "\n".join(frontmatter_lines) + "\n" + payload.content
+        file_content = "\n".join(frontmatter_lines) + "\n" + moment_content
 
         # 写入 .md 文件
         with open(file_path, "w", encoding="utf-8") as f:
@@ -138,14 +138,15 @@ class DeletePayload(BaseModel):
     id: str
 
 @router.post("/delete")
-def delete_moment(payload: DeletePayload):
+def delete_moment(payload: DeletePayload, _=Depends(get_current_admin)):
     try:
+        target_id = sanitize_nosql_field(payload.id, max_length=100)
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
         MOMENTS_DIR = os.path.join(project_root, "moments")
 
         # 先尝试精确匹配（兼容旧 id 格式的文件名）
-        file_path = os.path.join(MOMENTS_DIR, f"{payload.id}.md")
+        file_path = os.path.join(MOMENTS_DIR, f"{target_id}.md")
 
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -153,7 +154,7 @@ def delete_moment(payload: DeletePayload):
 
             try:
                 comments_coll = get_comments_collection()
-                delete_result = comments_coll.delete_many({"page_id": f"/moments/{payload.id}"})
+                delete_result = comments_coll.delete_many({"page_id": f"/moments/{target_id}"})
                 print(f"[评论清理] 已自动删除 {delete_result.deleted_count} 条说说关联评论")
             except Exception as ce:
                 print(f"[评论清理失败] {str(ce)}")
@@ -179,13 +180,13 @@ def delete_moment(payload: DeletePayload):
                         parts = content.split("---", 2)
                         if len(parts) >= 3:
                             fm = yaml.safe_load(parts[1])
-                            if fm and fm.get("id") == payload.id:
+                            if fm and fm.get("id") == target_id:
                                 os.remove(fp)
                                 print(f"\n[删除成功] 物理文件已粉碎：{fp}\n")
 
                                 try:
                                     comments_coll = get_comments_collection()
-                                    delete_result = comments_coll.delete_many({"page_id": f"/moments/{payload.id}"})
+                                    delete_result = comments_coll.delete_many({"page_id": f"/moments/{target_id}"})
                                     print(f"[评论清理] 已自动删除 {delete_result.deleted_count} 条说说关联评论")
                                 except Exception as ce:
                                     print(f"[评论清理失败] {str(ce)}")

@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Body, Query, HTTPException
+from fastapi import APIRouter, Body, Query, HTTPException, Depends
 from bson import ObjectId
 from bson.errors import InvalidId
 from cms_core.database import get_announcements_collection
 from pydantic import BaseModel
 from typing import Optional
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
@@ -49,6 +50,7 @@ async def admin_list_all(
     status: str = Query(default="all"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    _=Depends(get_current_admin),
 ):
     try:
         col = get_announcements_collection()
@@ -74,18 +76,20 @@ async def admin_list_all(
 
 
 @router.post("/admin/create")
-async def create_announcement(payload: AnnouncementCreate):
+async def create_announcement(payload: AnnouncementCreate, _=Depends(get_current_admin)):
     try:
         now = datetime.now(timezone.utc)
+        clean_content = sanitize_nosql_field(payload.content, max_length=2000)
+        clean_status = sanitize_nosql_field(payload.status, max_length=50)
         doc = {
-            "content": payload.content,
-            "status": payload.status,
+            "content": clean_content,
+            "status": clean_status,
             "publish_time": None,
             "created_at": now,
             "updated_at": now,
         }
 
-        if payload.status == "published":
+        if clean_status == "published":
             doc["publish_time"] = now
 
         col = get_announcements_collection()
@@ -98,7 +102,7 @@ async def create_announcement(payload: AnnouncementCreate):
 
 
 @router.put("/admin/update/{announcement_id}")
-async def update_announcement(announcement_id: str, payload: AnnouncementUpdate):
+async def update_announcement(announcement_id: str, payload: AnnouncementUpdate, _=Depends(get_current_admin)):
     try:
         if not ObjectId.is_valid(announcement_id):
             return {"success": False, "message": "无效的公告 ID"}
@@ -107,16 +111,17 @@ async def update_announcement(announcement_id: str, payload: AnnouncementUpdate)
         update_fields: dict = {"updated_at": datetime.now(timezone.utc)}
 
         if payload.content is not None:
-            update_fields["content"] = payload.content
+            update_fields["content"] = sanitize_nosql_field(payload.content, max_length=2000)
 
         if payload.status is not None:
-            if payload.status not in ("draft", "published"):
+            clean_status = sanitize_nosql_field(payload.status, max_length=50)
+            if clean_status not in ("draft", "published"):
                 return {"success": False, "message": "无效的状态，仅支持 draft 或 published"}
-            update_fields["status"] = payload.status
+            update_fields["status"] = clean_status
 
-            if payload.status == "published":
+            if clean_status == "published":
                 existing = col.find_one({"_id": ObjectId(announcement_id)})
-                if existing and existing.get("status") != "published":
+                if existing and existing.get("status")!= "published":
                     update_fields["publish_time"] = datetime.now(timezone.utc)
 
         result = col.update_one(
@@ -135,7 +140,7 @@ async def update_announcement(announcement_id: str, payload: AnnouncementUpdate)
 
 
 @router.delete("/admin/{announcement_id}")
-async def delete_announcement(announcement_id: str):
+async def delete_announcement(announcement_id: str, _=Depends(get_current_admin)):
     try:
         if not ObjectId.is_valid(announcement_id):
             return {"success": False, "message": "无效的公告 ID"}
@@ -154,7 +159,7 @@ async def delete_announcement(announcement_id: str):
 
 
 @router.get("/admin/stats")
-async def get_announcement_stats():
+async def get_announcement_stats(_=Depends(get_current_admin)):
     try:
         col = get_announcements_collection()
         stats = {

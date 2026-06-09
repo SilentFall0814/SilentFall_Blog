@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../../../components/BackButton';
 import { useToast } from '../../../components/ToastProvider';
+import { apiFetch } from '../../../lib/apiFetch';
 import { Plus, Pencil, Trash2, Megaphone, FileEdit, Eye, EyeOff, Save, X } from 'lucide-react';
 
 interface Announcement {
@@ -35,20 +36,9 @@ export default function AnnouncementsBoard() {
 
   const [stats, setStats] = useState({ total: 0, published: 0, draft: 0 });
 
-  const getApiBase = useCallback(async () => {
-    try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      return `http://127.0.0.1:${config.api_port}`;
-    } catch {
-      return 'http://127.0.0.1:8765';
-    }
-  }, []);
-
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const base = await getApiBase();
-      const res = await fetch(`${base}/api/announcements/admin/all?status=${filterStatus}&page=1&page_size=100`);
+      const res = await apiFetch(`/api/announcements?path=admin/all&status=${filterStatus}&page=1&page_size=100`);
       const data = await res.json();
       if (data.success) {
         setAnnouncements(data.data);
@@ -58,18 +48,17 @@ export default function AnnouncementsBoard() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, getApiBase, showToast]);
+  }, [filterStatus, showToast]);
 
   const fetchStats = useCallback(async () => {
     try {
-      const base = await getApiBase();
-      const res = await fetch(`${base}/api/announcements/admin/stats`);
+      const res = await apiFetch('/api/announcements?path=admin/stats');
       const data = await res.json();
       if (data.success) {
         setStats(data.data);
       }
     } catch {}
-  }, [getApiBase]);
+  }, []);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -84,11 +73,10 @@ export default function AnnouncementsBoard() {
     }
 
     try {
-      const base = await getApiBase();
       let res: Response;
 
       if (mode === 'add') {
-        res = await fetch(`${base}/api/announcements/admin/create`, {
+        res = await apiFetch('/api/announcements?path=admin/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -97,7 +85,7 @@ export default function AnnouncementsBoard() {
           }),
         });
       } else {
-        res = await fetch(`${base}/api/announcements/admin/update/${data.id}`, {
+        res = await apiFetch(`/api/announcements?path=admin/update/${data.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -134,8 +122,7 @@ export default function AnnouncementsBoard() {
   const handleToggleStatus = async (item: Announcement) => {
     const newStatus = item.status === 'published' ? 'draft' : 'published';
     try {
-      const base = await getApiBase();
-      const res = await fetch(`${base}/api/announcements/admin/update/${item.id}`, {
+      const res = await apiFetch(`/api/announcements?path=admin/update/${item.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -167,8 +154,7 @@ export default function AnnouncementsBoard() {
   const handleDelete = async () => {
     if (!deleteModal.id) return;
     try {
-      const base = await getApiBase();
-      const res = await fetch(`${base}/api/announcements/admin/${deleteModal.id}`, {
+      const res = await apiFetch(`/api/announcements?path=admin/${deleteModal.id}`, {
         method: 'DELETE',
       });
 

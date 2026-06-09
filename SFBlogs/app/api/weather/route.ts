@@ -5,13 +5,23 @@ export async function GET() {
   const token = process.env.QWEATHER_KEY;
   const locationId = "101010100"; // 北京
 
+  // 未配置天气 API 密钥时，返回空数据而非报错
   if (!token) {
-    console.error("❌ 环境变量 QWEATHER_KEY (Token) 未找到");
-    return NextResponse.json({ code: "500", message: "Token missing" }, { status: 500 });
+    return NextResponse.json({
+      code: "200",
+      now: {
+        temp: "--",
+        text: "未配置",
+        windDir: "--",
+        windScale: "--",
+        humidity: "--",
+        feelsLike: "--",
+      },
+      message: "天气服务未配置，请在环境变量中设置 QWEATHER_KEY"
+    });
   }
 
-  // 🌟 核心：按照你提供的文档，尝试两个可能的 Host
-  // 如果你有特定的 API Host（例如 xxx.qweather.com），请把第一个换成它
+  // 尝试两个可能的 API Host（正式环境 / 免费开发环境）
   const apiHosts = [
     'https://api.qweather.com/v7/weather/now',
     'https://devapi.qweather.com/v7/weather/now'
@@ -20,36 +30,41 @@ export async function GET() {
   for (const host of apiHosts) {
     try {
       const url = `${host}?location=${locationId}`;
-      console.log(`📡 尝试使用 Bearer 认证请求: ${host}`);
-
       const res = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept-Encoding': 'gzip',
-          'User-Agent': 'Vercel-Weather-Proxy/1.0'
+          'User-Agent': 'SilentFall-Blog-Weather/1.0'
         },
         next: { revalidate: 300 }
       });
 
       const data = await res.json();
 
-      // 如果返回 200，说明这套 Bearer 认证终于对上暗号了！
       if (data.code === "200" || res.status === 200) {
-        console.log(`✅ 认证通过! 来源: ${host}`);
         return NextResponse.json(data);
       }
 
-      console.warn(`⚠️ ${host} 认证未通过:`, data);
+      console.warn(`天气 API ${host} 返回非 200:`, data);
 
     } catch (err: any) {
-      console.error(`🔥 请求 ${host} 出错:`, err.message);
+      console.error(`天气 API 请求 ${host} 出错:`, err.message);
       continue;
     }
   }
 
+  // 所有 API 均失败时，返回兜底数据而非 500 错误
   return NextResponse.json({
-    code: "500",
-    message: "认证协议对接失败，请检查是否在 Vercel 填写了正确的 Token"
-  }, { status: 500 });
+    code: "200",
+    now: {
+      temp: "--",
+      text: "获取失败",
+      windDir: "--",
+      windScale: "--",
+      humidity: "--",
+      feelsLike: "--",
+    },
+    message: "天气服务暂时不可用"
+  });
 }

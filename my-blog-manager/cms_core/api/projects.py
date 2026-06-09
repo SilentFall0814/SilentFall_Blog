@@ -1,6 +1,7 @@
 import os
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
@@ -13,9 +14,10 @@ TARGET_FILE = os.path.join(PROJECT_ROOT, "data", "projects.ts")
 
 
 @router.post("/sync")
-async def sync_projects(request: Request):
+async def sync_projects(request: Request, _=Depends(get_current_admin)):
     try:
-        payload = await request.json()
+        raw_payload = await request.json()
+        payload = sanitize_payload(raw_payload)
         projects_list = payload.get("projects", [])
 
         print(f"🚀 尝试物理写入项目矩阵: {TARGET_FILE}")

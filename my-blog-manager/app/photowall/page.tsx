@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Search, Image as ImageIcon, X, Save, AlertTriangle, Sparkles, Edit3, CloudUpload } from 'lucide-react';
 import { useOperations } from '../../context/OperationContext';
 import { useToast } from '../../components/ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 import FloatingImageTool from '../../components/editor/FloatingImageTool';
 
 export default function PhotoWallPage() {
@@ -52,9 +53,7 @@ export default function PhotoWallPage() {
     }
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/picbed/delete_local`, {
+      const res = await apiFetch('/api/picbed?path=delete_local', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })

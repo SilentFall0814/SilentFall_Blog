@@ -8,13 +8,16 @@ from cms_core.api import sync, comments, guest_moments
 from cms_core.api import analytics
 from cms_core.api import steam
 from cms_core.api import announcements
+from cms_core.api import auth
+from cms_core.security import ALLOWED_ORIGINS
 
 app = FastAPI(title="SilentFall_Blog CMS Backend", version="1.0.0")
 
-# 🌟 核心修复：添加跨域中间件，彻底解决 Failed to fetch 报错
+# 🌟 安全加固：CORS 改为白名单模式，从 CMS_ALLOWED_ORIGINS 环境变量读取
+#    生产环境请务必设置具体域名，例如：http://localhost:3001,https://yourblog.com
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有来源请求
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],  # 允许所有请求方法 (GET, POST 等)
     allow_headers=["*"],  # 允许所有请求头
@@ -39,3 +42,4 @@ app.include_router(guest_moments.router, prefix="/api/guest_moments", tags=["Gue
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(steam.router, prefix="/api/steam", tags=["Steam"])
 app.include_router(announcements.router, prefix="/api/announcements", tags=["Announcements"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])

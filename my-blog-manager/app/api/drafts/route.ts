@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, buildBackendHeaders } from '../../../lib/backendProxy';
 
-const BACKEND_URL = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
-
-// GET /api/drafts/all_tags
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'all_tags';
-    const res = await fetch(`${BACKEND_URL}/api/drafts/${path}`, { cache: 'no-store' });
+    const res = await fetch(getBackendUrl('/api/drafts/' + path), {
+      cache: 'no-store',
+      headers: buildBackendHeaders(req),
+    });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
@@ -16,17 +17,19 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/drafts/save 或 /api/drafts/get
 export async function POST(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'save';
     const body = await req.json();
-    const res = await fetch(`${BACKEND_URL}/api/drafts/${path}`, {
+    const res = await fetch(getBackendUrl('/api/drafts/' + path), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildBackendHeaders(req),
       body: JSON.stringify(body),
     });
+    if (res.status === 401) {
+      return NextResponse.json(await res.json(), { status: 401 });
+    }
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {

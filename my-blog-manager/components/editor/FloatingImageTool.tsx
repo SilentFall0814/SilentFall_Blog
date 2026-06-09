@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../ToastProvider';
 import { siteConfig } from '../../siteConfig';
+import { apiFetch } from '../../lib/apiFetch';
 import { Upload, Link2, Image as ImageIcon, X, Check, Copy, Trash2 } from 'lucide-react';
 
 interface FloatingImageToolProps {
@@ -84,21 +85,19 @@ export default function FloatingImageTool({ isOpen, onClose, onInsert }: Floatin
     }, 200);
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
       const uploadData = new FormData();
       uploadData.append('file', file);
       
-      let endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload`;
+      let endpoint = '/api/picbed?path=upload';
       
       if (isLocal) {
-        endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload_local`;
+        endpoint = '/api/picbed?path=upload_local';
       } else {
         uploadData.append('url', picUrl);
         uploadData.append('token', picToken);
       }
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: 'POST',
         body: uploadData,
       });

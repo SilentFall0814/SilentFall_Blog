@@ -1,8 +1,9 @@
 import hashlib
 from datetime import datetime, timezone
-from fastapi import APIRouter, Request, Query, Body
+from fastapi import APIRouter, Request, Query, Body, Depends
 from bson import ObjectId
 from cms_core.database import get_guest_moments_collection
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 from pydantic import BaseModel
 from typing import Optional
 
@@ -27,15 +28,24 @@ def _serialize(doc: dict) -> dict:
 
 @router.post("/submit")
 async def submit_guest_moment(payload: GuestMomentSubmit, request: Request):
-    """访客提交说说"""
+    """访客提交说说（公开接口，但严格净化输入）"""
     now = datetime.now(timezone.utc)
+    # 🌟 安全：净化所有用户输入
+    author = sanitize_nosql_field(payload.author, max_length=50) or "匿名"
+    content = sanitize_payload({"c": payload.content}, safe_keys=set()).get("c", "")
+    location = sanitize_nosql_field(payload.location, max_length=100)
+    email = sanitize_nosql_field(payload.email, max_length=100)
+
+    if not content:
+        return {"success": False, "message": "内容不能为空"}
+
     doc = {
-        "author": payload.author,
-        "email": payload.email,
-        "avatar": _gravatar_url(payload.email),
-        "content": payload.content,
-        "location": payload.location,
-        "status": "pending", # 默认为待审核
+        "author": author,
+        "email": email,
+        "avatar": _gravatar_url(email),
+        "content": content,
+        "location": location,
+        "status": "pending",  # 默认为待审核
         "created_at": now,
         "updated_at": now,
         "ip": request.client.host if request.client else "",
@@ -56,11 +66,12 @@ async def list_approved_guest_moments():
 
 @router.get("/admin/all")
 async def admin_list_all_guest_moments(
+    _=Depends(get_current_admin),
     status: str = Query(default="all"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100)
 ):
-    """管理员获取所有访客说说"""
+    """管理员获取所有访客说说（需管理员权限）"""
     col = get_guest_moments_collection()
     query = {}
     if status != "all":
@@ -81,8 +92,8 @@ async def admin_list_all_guest_moments(
     }
 
 @router.put("/admin/status/{moment_id}")
-async def update_guest_moment_status(moment_id: str, payload: dict = Body(...)):
-    """审核操作"""
+async def update_guest_moment_status(moment_id: str, payload: dict = Body(...), _=Depends(get_current_admin)):
+    """审核操作（需管理员权限）"""
     new_status = payload.get("status")
     if new_status not in ("approved", "pending", "rejected"):
         return {"success": False, "message": "无效的状态"}
@@ -99,8 +110,8 @@ async def update_guest_moment_status(moment_id: str, payload: dict = Body(...)):
     return {"success": True, "message": f"已更新为 {new_status}"}
 
 @router.delete("/admin/{moment_id}")
-async def delete_guest_moment(moment_id: str):
-    """彻底删除"""
+async def delete_guest_moment(moment_id: str, _=Depends(get_current_admin)):
+    """彻底删除（需管理员权限）"""
     col = get_guest_moments_collection()
     result = col.delete_one({"_id": ObjectId(moment_id)})
 

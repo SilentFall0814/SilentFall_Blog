@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOperations } from '../context/OperationContext';
 import { useToast } from './ToastProvider';
-import { AlertTriangle, ChevronDown, Home, Gamepad2, Image, Music, MessageSquare, FileText, Users, Info, Clock, ShieldCheck, Megaphone, BarChart3, Settings, Layers, Eye } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Home, Gamepad2, Image, Music, MessageSquare, FileText, Users, Info, Clock, ShieldCheck, Megaphone, BarChart3, Settings, Layers, Eye, LogOut } from 'lucide-react';
 import { siteConfig } from '../siteConfig';
+import { clearToken } from '../lib/auth';
+import { apiFetch } from '../lib/apiFetch';
 
 interface NavGroup {
   label: string;
@@ -28,15 +30,20 @@ export default function Navbar() {
   const [publishProgress, setPublishProgress] = useState<string>("");
 
   const pathname = usePathname();
+  const router = useRouter();
   const { operations, removeOperation, clearOperations } = useOperations();
   const { showToast } = useToast();
+
+  const handleLogout = () => {
+    clearToken();
+    showToast("已退出登录", "success");
+    router.push("/admin");
+  };
 
   useEffect(() => {
     const fetchPath = async () => {
       try {
-        const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-        const config = await configRes.json();
-        const res = await fetch(`http://127.0.0.1:${config.api_port}/api/sync/config`);
+        const res = await apiFetch('/api/sync?path=config');
         if (res.ok) {
           const data = await res.json();
           if (data.blogPath) {
@@ -106,6 +113,7 @@ export default function Navbar() {
         { name: '访客', href: '/admin/visitors', icon: <Users size={14} /> },
         { name: '访问记录', href: '/admin/view-records', icon: <Eye size={14} /> },
         { name: '设置', href: '/settings', icon: <Settings size={14} /> },
+        { name: '退出登录', href: '#logout', icon: <LogOut size={14} /> },
       ],
     },
   ];
@@ -151,10 +159,6 @@ export default function Navbar() {
     setPublishProgress("📦 正在准备发布...");
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
-      const apiBase = `http://127.0.0.1:${configData.api_port}`;
-
       // 将操作队列转换为后端期望的格式
       const formattedOps = operations.map(op => {
         let type = op.type;
@@ -199,9 +203,8 @@ export default function Navbar() {
       setPublishProgress("💾 正在保存本地...");
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const res = await fetch(`${apiBase}/api/sync/publish_and_sync`, {
+      const res = await apiFetch('/api/sync?path=publish_and_sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operations: formattedOps,
           blogPath: targetBlogPath
@@ -264,50 +267,45 @@ export default function Navbar() {
       try {
         showToast(`🔍 正在准备发送 ${operations.length} 个任务...`, "info");
 
-        const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-        const configData = await configRes.json();
-        const apiBase = `http://127.0.0.1:${configData.api_port}`;
-
         for (const op of operations) {
           let apiUrl = '';
           let body = {};
 
           switch (op.type) {
             case 'sync_photowall':
-              apiUrl = `${apiBase}/api/gallery/sync`;
+              apiUrl = '/api/gallery?path=sync';
               body = { albums: op.value };
               break;
             case 'sync_friends':
-              apiUrl = `${apiBase}/api/friends/sync`;
+              apiUrl = '/api/friends?path=sync';
               body = { friends: op.value };
               break;
             case 'sync_projects':
-              apiUrl = `${apiBase}/api/projects/sync`;
+              apiUrl = '/api/projects?path=sync';
               body = { projects: op.value };
               break;
             case 'sync_steam':
-              apiUrl = `${apiBase}/api/steam/sync`;
+              apiUrl = '/api/steam?path=sync';
               body = { games: op.value };
               break;
             case 'CONFIG':
-              apiUrl = `${apiBase}/api/config/update`;
+              apiUrl = '/api/config?path=update';
               body = { updates: op.payload };
               break;
             case 'create_moment':
-              apiUrl = `${apiBase}/api/moments/save`;
+              apiUrl = '/api/moments?path=save';
               body = op.payload;
               break;
             default:
-              apiUrl = `${apiBase}/api/drafts/sync_local`;
+              apiUrl = '/api/drafts?path=sync_local';
               body = { operations: [{ type: op.type, payload: op.payload || op.value }] };
               break;
           }
 
           showToast(`🚀 正在请求后端: ${apiUrl}`, "info");
 
-          const res = await fetch(apiUrl, {
+          const res = await apiFetch(apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
           });
 
@@ -354,13 +352,10 @@ export default function Navbar() {
     setSyncModalOpen(false);
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
       showToast("🚀 正在镜像数据至目标项目，请稍候...", "info");
 
-      const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/sync/execute`, {
+      const res = await apiFetch('/api/sync?path=execute', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ blogPath: targetBlogPath })
       });
 
@@ -415,17 +410,34 @@ export default function Navbar() {
                           transition={{ duration: 0.15 }}
                           className="absolute top-full left-0 mt-2 w-44 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/40 dark:border-slate-700/60 rounded-2xl shadow-2xl p-2 z-50"
                         >
-                          {group.items.map((item) => (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={() => setActiveGroup(null)}
-                              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${pathname === item.href ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
-                            >
-                              {item.icon}
-                              <span>{item.name}</span>
-                            </Link>
-                          ))}
+                          {group.items.map((item) => {
+                            if (item.href === "#logout") {
+                              return (
+                                <button
+                                  key={item.href}
+                                  onClick={() => {
+                                    setActiveGroup(null);
+                                    handleLogout();
+                                  }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-all"
+                                >
+                                  {item.icon}
+                                  <span>{item.name}</span>
+                                </button>
+                              );
+                            }
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => setActiveGroup(null)}
+                                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${pathname === item.href ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
+                              >
+                                {item.icon}
+                                <span>{item.name}</span>
+                              </Link>
+                            );
+                          })}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -455,17 +467,34 @@ export default function Navbar() {
                     {navGroups.map((group) => (
                       <div key={group.label} className="mb-3 last:mb-0">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 mb-1.5">{group.label}</p>
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setActiveGroup(null)}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${pathname === item.href ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
-                          >
-                            {item.icon}
-                            <span>{item.name}</span>
-                          </Link>
-                        ))}
+                        {group.items.map((item) => {
+                          if (item.href === "#logout") {
+                            return (
+                              <button
+                                key={item.href}
+                                onClick={() => {
+                                  setActiveGroup(null);
+                                  handleLogout();
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-all text-left"
+                              >
+                                {item.icon}
+                                <span>{item.name}</span>
+                              </button>
+                            );
+                          }
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setActiveGroup(null)}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${pathname === item.href ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
+                            >
+                              {item.icon}
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
                       </div>
                     ))}
                   </motion.div>

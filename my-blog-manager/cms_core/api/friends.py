@@ -1,6 +1,7 @@
 import os
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
@@ -11,9 +12,10 @@ FRIENDS_TS_PATH = os.path.join(PROJECT_ROOT, "data", "friends.ts")
 
 
 @router.post("/sync")
-async def sync_friends(request: Request):
+async def sync_friends(request: Request, _=Depends(get_current_admin)):
     try:
-        payload = await request.json()
+        raw_payload = await request.json()
+        payload = sanitize_payload(raw_payload)
         friends_list = payload.get("friends", [])
 
         # 1. 序列化

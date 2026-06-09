@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { siteConfig } from '../../siteConfig';
 import { Plus, Pencil, Trash2, Search, Sparkles, AlertTriangle, X } from 'lucide-react';
 import { useToast } from '../../components/ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 
 type Post = {
   slug: string;
@@ -47,11 +48,8 @@ export default function PostsBoard({ posts: initialPosts }: { posts: Post[] }) {
   const confirmDelete = async () => {
     if (!deleteModal.slug) return;
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/delete`, {
+      const res = await apiFetch('/api/drafts?path=delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: deleteModal.slug, title: deleteModal.title })
       });
       const data = await res.json();

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { apiFetch } from '../lib/apiFetch';
 
 interface Comment {
   id: string;
@@ -32,7 +33,7 @@ export default function Comments() {
   const fetchComments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/comments?page_id=${encodeURIComponent(pageId)}`);
+      const res = await apiFetch(`/api/comments?page_id=${encodeURIComponent(pageId)}`);
       const data = await res.json();
       if (data.success) setComments(data.data);
     } catch {
@@ -61,9 +62,8 @@ export default function Comments() {
     if (!author.trim() || !content.trim()) return;
     setSubmitting(true);
     try {
-      const res = await fetch('/api/comments', {
+      const res = await apiFetch('/api/comments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           page_id: pageId,
           author: author.trim(),
@@ -90,7 +90,7 @@ export default function Comments() {
 
   const handleLike = async (id: string) => {
     try {
-      await fetch(`/api/comments/like/${id}`, { method: 'POST' });
+      await apiFetch(`/api/comments/like/${id}`, { method: 'POST' });
       setComments(prev =>
         prev.map(c => (c.id === id ? { ...c, likes: c.likes + 1 } : c))
       );

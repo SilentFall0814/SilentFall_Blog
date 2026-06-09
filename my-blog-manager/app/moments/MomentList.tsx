@@ -7,6 +7,7 @@ import MomentComments from '../../components/MomentComments';
 import { useToast } from '../../components/ToastProvider';
 import { siteConfig } from '../../siteConfig';
 import { useOperations } from '../../context/OperationContext';
+import { apiFetch } from '../../lib/apiFetch';
 
 interface GuestMoment {
   id: string;
@@ -52,9 +53,7 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
 
   const fetchGuestMoments = async () => {
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${config.api_port}/api/guest_moments/list_approved`);
+      const res = await apiFetch(`/api/guest-moments?status=approved&page=1&page_size=100`);
       const data = await res.json();
       if (data.success) setGuestMoments(data.data || []);
     } catch {}
@@ -75,9 +74,7 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
     }
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
-      const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/picbed/delete_local`, {
+      const res = await apiFetch('/api/picbed?path=delete_local', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
@@ -170,23 +167,22 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
     showToast(isLocal ? `正在上传 ${files.length} 张图片到本地...` : `正在上传 ${files.length} 张图片至云端...`, "info");
     
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
       const newUrls: string[] = [];
       
       for (let i = 0; i < files.length; i++) {
         const uploadData = new FormData();
         uploadData.append('file', files[i]);
         
-        let endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload`;
+        let endpoint = '/api/picbed?path=upload';
+        
         if (isLocal) {
-          endpoint = `http://127.0.0.1:${configData.api_port}/api/picbed/upload_local`;
+          endpoint = '/api/picbed?path=upload_local';
         } else {
           uploadData.append('url', picUrl);
           uploadData.append('token', picToken);
         }
 
-        const res = await fetch(endpoint, {
+        const res = await apiFetch(endpoint, {
           method: 'POST',
           body: uploadData,
         });
@@ -254,10 +250,6 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
     showToast("🚀 正在强行直连 Python 引擎...", "info");
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      if (!configRes.ok) throw new Error("无法读取 backend_config.json");
-      const configData = await configRes.json();
-
       const payload = {
         id: `moment-${Date.now()}`,
         date: new Date().toISOString(),
@@ -265,9 +257,8 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
         location: newMoment.location,
         images: newMoment.images
       };
-      const apiUrl = `http://127.0.0.1:${configData.api_port}/api/moments/save`;
 
-      const res = await fetch(apiUrl, {
+      const res = await apiFetch('/api/moments?path=save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -295,11 +286,8 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
-
       if (deleteConfirmType === 'guest') {
-        const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/guest_moments/admin/${deleteConfirmId}`, {
+        const res = await apiFetch(`/api/guest-moments/${deleteConfirmId}`, {
           method: 'DELETE',
         });
         const data = await res.json();
@@ -318,8 +306,7 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
           }
         }
 
-        const apiUrl = `http://127.0.0.1:${configData.api_port}/api/moments/delete`;
-        const res = await fetch(apiUrl, {
+        const res = await apiFetch('/api/moments?path=delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: deleteConfirmId })

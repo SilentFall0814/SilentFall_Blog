@@ -1,8 +1,9 @@
 import hashlib
 from datetime import datetime, timezone
-from fastapi import APIRouter, Request, Query
+from fastapi import APIRouter, Request, Query, Depends
 from bson import ObjectId
 from cms_core.database import get_comments_collection
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
@@ -33,6 +34,7 @@ async def list_all_comments(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     status: str = Query(default="all"),
+    _=Depends(get_current_admin),
 ):
     col = get_comments_collection()
     query: dict = {}
@@ -56,12 +58,13 @@ async def list_all_comments(
 
 @router.post("/create")
 async def create_comment(request: Request):
-    body = await request.json()
-    page_id = body.get("page_id", "").strip()
-    author = body.get("author", "").strip()
-    email = body.get("email", "").strip()
-    content = body.get("content", "").strip()
-    reply_to = (body.get("reply_to") or "").strip() or None
+    raw_payload = await request.json()
+    payload = sanitize_payload(raw_payload)
+    page_id = sanitize_nosql_field(payload.get("page_id", ""), max_length=200)
+    author = sanitize_nosql_field(payload.get("author", ""), max_length=100)
+    email = sanitize_nosql_field(payload.get("email", ""), max_length=200)
+    content = sanitize_nosql_field(payload.get("content", ""), max_length=2000)
+    reply_to = sanitize_nosql_field((payload.get("reply_to") or ""), max_length=200) or None
 
     if not page_id or not author or not content:
         return {"success": False, "message": "页面标识、昵称和评论内容不能为空"}
@@ -74,7 +77,7 @@ async def create_comment(request: Request):
         "avatar": _gravatar_url(email) if email else "",
         "content": content,
         "reply_to": reply_to,
-        "status": "approved",
+        "status": "pending",
         "likes": 0,
         "created_at": now,
         "updated_at": now,
@@ -91,19 +94,26 @@ async def create_comment(request: Request):
 
 @router.post("/like/{comment_id}")
 async def like_comment(comment_id: str):
+    clean_id = sanitize_nosql_field(comment_id, max_length=50)
+    if not ObjectId.is_valid(clean_id):
+        return {"success": False, "message": "无效的评论 ID"}
     col = get_comments_collection()
-    result = col.update_one({"_id": ObjectId(comment_id)}, {"$inc": {"likes": 1}})
+    result = col.update_one({"_id": ObjectId(clean_id)}, {"$inc": {"likes": 1}})
     if result.matched_count == 0:
         return {"success": False, "message": "评论不存在"}
     return {"success": True}
 
 
 @router.put("/status/{comment_id}")
-async def update_comment_status(comment_id: str, request: Request):
-    body = await request.json()
-    new_status = body.get("status", "").strip()
+async def update_comment_status(comment_id: str, request: Request, _=Depends(get_current_admin)):
+    raw_payload = await request.json()
+    payload = sanitize_payload(raw_payload)
+    new_status = sanitize_nosql_field(payload.get("status", ""), max_length=50)
     if new_status not in ("approved", "pending", "hidden"):
         return {"success": False, "message": "无效的状态值"}
+
+    if not ObjectId.is_valid(comment_id):
+        return {"success": False, "message": "无效的评论 ID"}
 
     col = get_comments_collection()
     result = col.update_one(
@@ -116,7 +126,9 @@ async def update_comment_status(comment_id: str, request: Request):
 
 
 @router.delete("/{comment_id}")
-async def delete_comment(comment_id: str):
+async def delete_comment(comment_id: str, _=Depends(get_current_admin)):
+    if not ObjectId.is_valid(comment_id):
+        return {"success": False, "message": "无效的评论 ID"}
     col = get_comments_collection()
     result = col.delete_one({"_id": ObjectId(comment_id)})
     if result.deleted_count == 0:
@@ -125,7 +137,7 @@ async def delete_comment(comment_id: str):
 
 
 @router.get("/stats")
-async def comment_stats():
+async def comment_stats(_=Depends(get_current_admin)):
     col = get_comments_collection()
     return {
         "success": True,

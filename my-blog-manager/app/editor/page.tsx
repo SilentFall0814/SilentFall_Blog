@@ -10,6 +10,7 @@ import PageTransition from '../../components/PageTransition';
 import { ArrowLeft, AlertTriangle, Save, LogOut } from 'lucide-react';
 import { useToast } from '../../components/ToastProvider';
 import { useOperations } from '../../context/OperationContext';
+import { apiFetch } from '../../lib/apiFetch';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // 🌟 核心修改 1：把原本暴露的主函数改名为 EditorContent（不带 export default）
@@ -53,7 +54,7 @@ function EditorContent() {
     const fetchTags = async () => {
       setIsLoadingTags(true);
       try {
-        const res = await fetch(`/api/drafts?path=all_tags`);
+        const res = await apiFetch(`/api/drafts?path=all_tags`);
         const data = await res.json();
         if (data.success) {
           setHistoryPostTags(data.postTags || []);
@@ -69,7 +70,7 @@ function EditorContent() {
     if (currentDocId !== 'new') {
       const loadDraft = async () => {
         try {
-        const res = await fetch(`/api/drafts?path=get`, {
+        const res = await apiFetch(`/api/drafts?path=get`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: currentDocId, type: docType })
@@ -131,7 +132,7 @@ function EditorContent() {
 
     try {
       // 获取目标博客路径
-      const syncConfigRes = await fetch(`/api/sync?path=config`);
+      const syncConfigRes = await apiFetch(`/api/sync?path=config`);
       let blogPath = "";
       if (syncConfigRes.ok) {
         const syncConfigData = await syncConfigRes.json();
@@ -156,7 +157,7 @@ function EditorContent() {
 
       setSyncProgress("🚀 正在同步到博客目录...");
 
-      const res = await fetch(`/api/sync?path=publish_and_sync`, {
+      const res = await apiFetch(`/api/sync?path=publish_and_sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -216,7 +217,7 @@ function EditorContent() {
       // 🌟 正式发布：先保存到草稿系统，然后自动触发同步
       setIsSaving(true);
       try {
-        const res = await fetch(`/api/drafts?path=save`, {
+        const res = await apiFetch(`/api/drafts?path=save`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -254,7 +255,7 @@ function EditorContent() {
     // 存为草稿（原有逻辑）
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/drafts?path=save`, {
+      const res = await apiFetch(`/api/drafts?path=save`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
       const data = await res.json();

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const BACKEND_URL = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
+import { getBackendUrl, buildBackendHeaders } from '../../../lib/backendProxy';
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,7 +7,10 @@ export async function GET(req: NextRequest) {
     const page_id = searchParams.get('page_id') || '';
     const status = searchParams.get('status') || 'approved';
     const qs = new URLSearchParams({ page_id, status }).toString();
-    const res = await fetch(`${BACKEND_URL}/api/comments/list?${qs}`, { cache: 'no-store' });
+    const res = await fetch(getBackendUrl('/api/comments/list?' + qs), {
+      cache: 'no-store',
+      headers: buildBackendHeaders(req),
+    });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
@@ -20,11 +22,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const res = await fetch(`${BACKEND_URL}/api/comments/create`, {
+    const res = await fetch(getBackendUrl('/api/comments/create'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildBackendHeaders(req),
       body: JSON.stringify(body),
     });
+    if (res.status === 401) {
+      return NextResponse.json(await res.json(), { status: 401 });
+    }
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {

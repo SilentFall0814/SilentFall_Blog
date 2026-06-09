@@ -1,13 +1,11 @@
 import os
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
 # 🌟 核心修复：动态获取项目根目录
-# __file__ 是当前文件的绝对路径
-# os.path.dirname(__file__) 是 cms_core/api/
-# 再向上两级就是项目根目录 my-blog-manager/
 CURRENT_API_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_API_DIR, "..", ".."))
 
@@ -16,12 +14,13 @@ ALBUMS_TS_PATH = os.path.join(PROJECT_ROOT, "data", "albums.ts")
 
 
 @router.post("/sync")
-async def sync_gallery(request: Request):
+async def sync_gallery(request: Request, _=Depends(get_current_admin)):
     """
     接收前端传来的全量相册数组，并将其物理重写回 data/albums.ts
     """
     try:
-        payload = await request.json()
+        raw_payload = await request.json()
+        payload = sanitize_payload(raw_payload)
         albums_data = payload.get("albums", [])
 
         if not isinstance(albums_data, list):

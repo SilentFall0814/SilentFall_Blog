@@ -6,6 +6,7 @@ import BackButton from '../../components/BackButton';
 import { projectsData as initialProjects, Project } from '../../data/projects';
 import { Plus, Pencil, Trash2, AlertTriangle, Save, Edit3, X, Sparkles, Code2 } from 'lucide-react';
 import { useToast } from '../../components/ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function ProjectsBoard() {
   const { showToast } = useToast();
@@ -41,7 +42,7 @@ export default function ProjectsBoard() {
 
     try {
       // 获取博客路径
-      const syncConfigRes = await fetch('/api/sync?path=config');
+      const syncConfigRes = await apiFetch('/api/sync?path=config');
       let blogPath = "";
       if (syncConfigRes.ok) {
         const syncConfigData = await syncConfigRes.json();
@@ -49,9 +50,8 @@ export default function ProjectsBoard() {
       }
 
       // 调用 publish_and_sync 自动同步
-      const res = await fetch('/api/sync?path=publish_and_sync', {
+      const res = await apiFetch('/api/sync?path=publish_and_sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operations: [{
             type: "sync_projects",

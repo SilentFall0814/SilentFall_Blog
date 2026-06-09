@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const BACKEND = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
+import { getBackendUrl, buildBackendHeaders } from '../../../lib/backendProxy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,8 +8,8 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get('page') || '1';
     const page_size = searchParams.get('page_size') || '20';
     const res = await fetch(
-      `${BACKEND}/api/guest_moments/admin/all?status=${status}&page=${page}&page_size=${page_size}`,
-      { cache: 'no-store' }
+      getBackendUrl('/api/guest_moments/admin/all?status=' + status + '&page=' + page + '&page_size=' + page_size),
+      { cache: 'no-store', headers: buildBackendHeaders(request) }
     );
     const data = await res.json();
     return NextResponse.json(data);

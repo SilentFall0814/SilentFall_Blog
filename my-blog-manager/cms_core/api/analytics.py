@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
 import json
 import re
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from cms_core.database import get_comments_collection, get_guest_moments_collection, get_db
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 import urllib.request
 import urllib.error
 
@@ -176,9 +177,10 @@ async def get_online_count():
 @router.post("/record")
 async def record_visit(request: Request):
     """记录一次页面访问（自动解析 IP 地理位置）"""
-    body = await request.json()
-    page_id = body.get("page_id", "/")
-    page_title = body.get("page_title", "")
+    raw_payload = await request.json()
+    payload = sanitize_payload(raw_payload)
+    page_id = sanitize_nosql_field(payload.get("page_id", "/"), max_length=500)
+    page_title = sanitize_nosql_field(payload.get("page_title", ""), max_length=500)
     ip = request.client.host if request.client else ""
     user_agent = request.headers.get("user-agent", "")
 
@@ -397,10 +399,11 @@ async def get_visitors(
 
 
 @router.put("/visitors/block")
-async def block_visitors(request: Request):
+async def block_visitors(request: Request, _=Depends(get_current_admin)):
     """封禁访客"""
-    body = await request.json()
-    ids = body.get("ids", [])
+    raw_payload = await request.json()
+    payload = sanitize_payload(raw_payload)
+    ids = payload.get("ids", [])
 
     db = get_db()
     unique_visitors_col = db["unique_visitors"]
@@ -408,8 +411,11 @@ async def block_visitors(request: Request):
 
     try:
         for vid in ids:
+            clean_id = sanitize_nosql_field(str(vid), max_length=50)
+            if not ObjectId.is_valid(clean_id):
+                continue
             unique_visitors_col.update_one(
-                {"_id": ObjectId(vid)},
+                {"_id": ObjectId(clean_id)},
                 {"$set": {"isBlocked": True, "blocked_at": datetime.now(timezone.utc)}},
             )
     except Exception:
@@ -419,10 +425,11 @@ async def block_visitors(request: Request):
 
 
 @router.put("/visitors/unblock")
-async def unblock_visitors(request: Request):
+async def unblock_visitors(request: Request, _=Depends(get_current_admin)):
     """解封访客"""
-    body = await request.json()
-    ids = body.get("ids", [])
+    raw_payload = await request.json()
+    payload = sanitize_payload(raw_payload)
+    ids = payload.get("ids", [])
 
     db = get_db()
     unique_visitors_col = db["unique_visitors"]
@@ -430,8 +437,11 @@ async def unblock_visitors(request: Request):
 
     try:
         for vid in ids:
+            clean_id = sanitize_nosql_field(str(vid), max_length=50)
+            if not ObjectId.is_valid(clean_id):
+                continue
             unique_visitors_col.update_one(
-                {"_id": ObjectId(vid)},
+                {"_id": ObjectId(clean_id)},
                 {"$set": {"isBlocked": False, "unblocked_at": datetime.now(timezone.utc)}},
             )
     except Exception:
@@ -597,10 +607,11 @@ async def get_view_records(
 
 
 @router.delete("/view-records")
-async def delete_view_records(request: Request):
+async def delete_view_records(request: Request, _=Depends(get_current_admin)):
     """删除浏览记录（根据去重策略，删除同一IP+同一页面的所有关联记录）"""
-    body = await request.json()
-    ids = body.get("ids", [])
+    raw_payload = await request.json()
+    payload = sanitize_payload(raw_payload)
+    ids = payload.get("ids", [])
 
     if not ids:
         return {"success": False, "message": "未指定要删除的记录"}
@@ -611,8 +622,11 @@ async def delete_view_records(request: Request):
 
     try:
         # 先根据传入的 ids 找到对应的记录，获取它们的 (ip, page_id)
-        object_ids = [ObjectId(vid) for vid in ids]
-        source_docs = list(page_views_col.find({"_id": {"$in": object_ids}}, {"ip": 1, "page_id": 1}))
+        clean_ids = [sanitize_nosql_field(str(vid), max_length=50) for vid in ids]
+        valid_ids = [ObjectId(cid) for cid in clean_ids if ObjectId.is_valid(cid)]
+        if not valid_ids:
+            return {"success": False, "message": "无效的记录 ID"}
+        source_docs = list(page_views_col.find({"_id": {"$in": valid_ids}}, {"ip": 1, "page_id": 1}))
 
         if not source_docs:
             return {"success": False, "message": "未找到要删除的记录，可能已被删除"}

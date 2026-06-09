@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, buildBackendHeaders } from '../../../../lib/backendProxy';
 
-const BACKEND = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const res = await fetch(`${BACKEND}/api/guest_moments/admin/stats`, { cache: 'no-store' });
+    const res = await fetch(getBackendUrl('/api/guest_moments/admin/stats'), {
+      cache: 'no-store',
+      headers: buildBackendHeaders(req),
+    });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error: any) {

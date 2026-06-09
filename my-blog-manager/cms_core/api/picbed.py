@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Body, UploadFile, File, Form
+from fastapi import APIRouter, Body, UploadFile, File, Form, Depends
 import httpx
 import os
 import time
 import uuid
 
 import hashlib
+from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
 
 router = APIRouter()
 
@@ -13,26 +14,26 @@ PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_API_DIR, "..", ".."))
 UPLOAD_DIR = os.path.join(PROJECT_ROOT, "public", "uploads")
 
 @router.post("/upload_local")
-async def upload_local(file: UploadFile = File(...)):
+async def upload_local(file: UploadFile = File(...), _=Depends(get_current_admin)):
     """
     将图片上传到本地 public/uploads 目录，并使用 MD5 去重
     """
     try:
         if not os.path.exists(UPLOAD_DIR):
             os.makedirs(UPLOAD_DIR, exist_ok=True)
-        
+
         # 读取内容计算 MD5
         content = await file.read()
         md5_hash = hashlib.md5(content).hexdigest()
-        
+
         # 保持原后缀
         ext = os.path.splitext(file.filename)[1].lower()
         if not ext:
             ext = ".jpg" # 兜底后缀
-            
+
         new_filename = f"{md5_hash}{ext}"
         save_path = os.path.join(UPLOAD_DIR, new_filename)
-        
+
         # 如果文件不存在，则写入
         if not os.path.exists(save_path):
             with open(save_path, "wb") as f:
@@ -40,31 +41,30 @@ async def upload_local(file: UploadFile = File(...)):
             message = "本地上传成功"
         else:
             message = "检测到相同文件，已自动去重引用"
-            
+
         return {
-            "success": True, 
-            "message": message, 
+            "success": True,
+            "message": message,
             "url": f"/uploads/{new_filename}"
         }
     except Exception as e:
         return {"success": False, "message": f"本地上传失败: {str(e)}"}
 
 @router.post("/delete_local")
-async def delete_local(payload: dict = Body(...)):
+async def delete_local(payload: dict = Body(...), _=Depends(get_current_admin)):
     """
     删除本地 public/uploads 目录下的物理文件
     """
-    url = payload.get("url")
+    clean_payload = sanitize_payload(payload)
+    url = sanitize_nosql_field(clean_payload.get("url", ""), max_length=500)
     if not url or not url.startswith("/uploads/"):
         return {"success": False, "message": "无效的本地路径，仅支持删除 /uploads/ 开头的图片"}
-    
+
     filename = url.replace("/uploads/", "")
     file_path = os.path.join(UPLOAD_DIR, filename)
-    
+
     try:
         if os.path.exists(file_path):
-            # 🌟 进阶检查：如果该 MD5 文件被多个地方引用（虽然这里很难完美检查，但可以做简单的全局搜索）
-            # 由于目前是文件系统驱动，暂不实现复杂的引用计数，直接执行物理删除
             os.remove(file_path)
             return {"success": True, "message": f"物理文件 {filename} 已删除"}
         else:
@@ -74,9 +74,10 @@ async def delete_local(payload: dict = Body(...)):
 
 
 @router.post("/test")
-async def test_picbed_connection(payload: dict = Body(...)):
-    url = payload.get("url", "").strip().rstrip('/')
-    token = payload.get("token", "").strip()
+async def test_picbed_connection(payload: dict = Body(...), _=Depends(get_current_admin)):
+    clean_payload = sanitize_payload(payload)
+    url = sanitize_nosql_field(clean_payload.get("url", ""), max_length=500).rstrip('/')
+    token = sanitize_nosql_field(clean_payload.get("token", ""), max_length=1000)
 
     if not url or not token:
         return {"success": False, "message": "图床 API 地址和 Token 不能为空"}
@@ -90,7 +91,7 @@ async def test_picbed_connection(payload: dict = Body(...)):
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
             response = await client.get(test_endpoint, headers=headers)
-            if response.status_code != 200:
+            if response.status_code!= 200:
                 return {"success": False, "message": f"校验失败，服务器返回了 {response.status_code} 错误"}
 
             data = response.json()
@@ -108,10 +109,11 @@ async def test_picbed_connection(payload: dict = Body(...)):
 async def upload_image(
         file: UploadFile = File(...),
         url: str = Form(...),
-        token: str = Form(...)
+        token: str = Form(...),
+        _=Depends(get_current_admin)
 ):
-    url = url.strip().rstrip('/')
-    token = token.strip()
+    url = sanitize_nosql_field(url, max_length=500).strip().rstrip('/')
+    token = sanitize_nosql_field(token, max_length=1000).strip()
 
     if not token.startswith("Bearer "):
         token = f"Bearer {token}"
@@ -131,7 +133,7 @@ async def upload_image(
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(upload_endpoint, headers=headers, files=files)
 
-            if response.status_code != 200:
+            if response.status_code!= 200:
                 return {"success": False, "message": f"上传失败，图床返回了 {response.status_code} 错误"}
 
             data = response.json()

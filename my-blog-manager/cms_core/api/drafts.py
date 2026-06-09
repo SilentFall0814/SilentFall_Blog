@@ -3,12 +3,13 @@ import json
 import time
 import yaml
 import shutil
-from fastapi import APIRouter, Request, Body
+from fastapi import APIRouter, Request, Body, Depends
 from datetime import datetime
 import re
 import markdown  # 确保你已经安装了 markdown 库 (pip install markdown)
 from markdownify import markdownify as md
 from cms_core.database import get_comments_collection
+from cms_core.security import get_current_admin, sanitize_payload
 
 router = APIRouter()
 
@@ -66,11 +67,18 @@ def get_manager_drafts_dir() -> str:
 
 
 @router.post("/save")
-async def save_draft(request: Request):
+async def save_draft(request: Request, _=Depends(get_current_admin)):
+    """保存草稿（需管理员权限）"""
     try:
-        payload = await request.json()
+        raw_payload = await request.json()
     except Exception:
         return {"success": False, "message": "后端无法解析传来的 JSON 数据"}
+
+    # 🌟 安全：净化输入，保留富文本 content 字段的结构
+    payload = sanitize_payload(
+        raw_payload,
+        safe_keys={"content", "description"},
+    )
 
     drafts_dir = get_manager_drafts_dir()
     draft_id = payload.get("id")
@@ -103,7 +111,8 @@ async def save_draft(request: Request):
 
 
 @router.post("/list")
-async def list_drafts(request: Request):
+async def list_drafts(request: Request, _=Depends(get_current_admin)):
+    """列出草稿（需管理员权限）"""
     drafts_dir = get_manager_drafts_dir()
     drafts = []
     if not os.path.exists(drafts_dir):
@@ -126,7 +135,8 @@ async def list_drafts(request: Request):
 
 
 @router.post("/get")
-async def get_draft(request: Request):
+async def get_draft(request: Request, _=Depends(get_current_admin)):
+    """获取单个草稿（需管理员权限）"""
     try:
         payload = await request.json()
     except Exception:
@@ -203,7 +213,8 @@ async def get_draft(request: Request):
 
 
 @router.post("/delete")
-async def delete_draft(request: Request):
+async def delete_draft(request: Request, _=Depends(get_current_admin)):
+    """删除草稿/文章（需管理员权限）"""
     try:
         payload = await request.json()
     except Exception:
@@ -283,7 +294,8 @@ async def delete_draft(request: Request):
 
 
 @router.post("/sync_local")
-async def sync_local_operations(request: Request):
+async def sync_local_operations(request: Request, _=Depends(get_current_admin)):
+    """发布/同步操作（需管理员权限）"""
     payload = await request.json()
     operations = payload.get("operations", [])
     # 🌟 修复：用 PROJECT_ROOT 替换 os.getcwd()

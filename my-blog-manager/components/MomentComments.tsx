@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../lib/apiFetch';
 
 interface Comment {
   id: string;
@@ -29,7 +30,7 @@ export default function MomentComments({ id }: MomentCommentsProps) {
 
   const fetchComments = useCallback(async () => {
     try {
-      const res = await fetch(`/api/comments?page_id=${encodeURIComponent(id)}`);
+      const res = await apiFetch(`/api/comments?page_id=${encodeURIComponent(id)}`);
       const data = await res.json();
       if (data.success) setComments(data.data);
     } catch {}
@@ -53,9 +54,8 @@ export default function MomentComments({ id }: MomentCommentsProps) {
   const handleSubmit = async () => {
     if (!author.trim() || !content.trim()) return;
     try {
-      const res = await fetch('/api/comments', {
+      const res = await apiFetch('/api/comments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           page_id: id,
           author: author.trim(),

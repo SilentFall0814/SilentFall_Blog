@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Depends
 import os
 import re
 import json
 from typing import Dict, Any
+from cms_core.security import get_current_admin, sanitize_payload
 
 router = APIRouter()
 
@@ -42,10 +43,10 @@ def dict_to_ts_string(data, indent=2):
 
 
 # =========================================================
-# 🚀 接口 1：读取配置 (GET) - 终极安全隔离版
+# 🚀 接口 1：读取配置 (GET) - 需管理员权限（配置中含敏感信息）
 # =========================================================
 @router.get("/get")
-def get_site_config():
+def get_site_config(_=Depends(get_current_admin)):
     config_path = get_config_path()
     if not config_path:
         return {"success": False, "message": "未能找到 siteConfig.ts 文件"}
@@ -128,10 +129,13 @@ def get_site_config():
 
 
 # =========================================================
-# 🚀 接口 2：写入配置 (POST) - 白名单防漏防崩溃版
+# 🚀 接口 2：写入配置 (POST) - 需管理员权限 + 输入净化
 # =========================================================
 @router.post("/update")
-def update_site_config(payload: Dict[str, Any] = Body(...)):
+def update_site_config(payload: Dict[str, Any] = Body(...), _=Depends(get_current_admin)):
+    """更新站点配置（需管理员权限）"""
+    # 🌟 安全：净化输入
+    payload = sanitize_payload(payload)
     updates = payload.get("updates", {})
     if not updates:
         return {"success": False, "message": "没有收到需要更新的数据"}

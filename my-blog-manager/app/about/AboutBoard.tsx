@@ -7,6 +7,7 @@ import PageTransition from '../../components/PageTransition';
 import BackButton from '../../components/BackButton';
 import { Pencil } from 'lucide-react';
 import { useToast } from '../../components/ToastProvider';
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function AboutBoard() {
   const router = useRouter();
@@ -17,9 +18,7 @@ export default function AboutBoard() {
   useEffect(() => {
     const fetchAbout = async () => {
       try {
-        const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-        const config = await configRes.json();
-        const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/get`, {
+        const res = await apiFetch('/api/drafts?path=get', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: 'about', type: 'about' })
