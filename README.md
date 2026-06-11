@@ -118,7 +118,6 @@ SilentFall_Blog/
 │   │   ├── path_utils.py         # 同步目标路径解析
 │   │   ├── security.py           # 鉴权、输入净化、限流与 CORS 白名单
 │   │   └── main.py               # FastAPI 入口
-│   ├── data/deploy_config.json   # 用户端同步目标目录配置
 │   ├── manager_data/drafts/      # 草稿文件目录
 │   ├── lib/backendProxy.ts       # 管理端后端地址解析
 │   └── siteConfig.ts             # 管理端本地配置源
@@ -217,7 +216,7 @@ npm run dev
 - `guest_moments`：访客说说数据，默认待审核。
 - `announcements`：公告数据，支持草稿与发布状态。
 - `page_views`、`unique_visitors`：访问统计与访客分析数据。
-- `my-blog-manager/manager_data/drafts/`：管理端草稿文件。
+- `my-blog-manager/manager_data/drafts/`：管理端运行时草稿目录，默认不提交到版本库。
 - `my-blog-manager/posts/`、`moments/`、`milestones/`：管理端本地发布结果。
 - `SFBlogs/posts/`、`milestones/`、`data/`、`public/uploads/`：同步后的用户端内容。
 

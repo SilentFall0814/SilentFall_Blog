@@ -54,5 +54,7 @@ env/
 # 上传文件（可能包含大文件）
 uploads/
 
-# 部署配置中的本地路径
-# deploy_config.json 包含本地绝对路径，不应提交
+# 运行时与本地配置
+my-blog-manager/manager_data/
+my-blog-manager/data/deploy_config.json
+my-blog-manager/public/backend_config.json

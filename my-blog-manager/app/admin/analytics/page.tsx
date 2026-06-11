@@ -612,7 +612,7 @@ function AnalyticsContent() {
               <h2 className="text-xl font-black text-slate-800 dark:text-white mb-2">无法连接后端服务</h2>
               <p className="text-slate-500 text-sm mb-6 text-center max-w-md">
                 请确保 Python 后端服务已启动，且数据库连接正常。
-                <br />后端端口配置在 <code className="text-indigo-500">public/backend_config.json</code>
+                <br />后端地址由环境变量或同域反向代理配置决定
               </p>
               <button
                 onClick={handleRefresh}
