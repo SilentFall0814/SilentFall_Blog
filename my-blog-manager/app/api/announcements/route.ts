@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'admin/all';
     const qs = searchParams.toString().replace(/path=[^&]*&?/, '').replace(/&$/, '');
-    const url = getBackendUrl('/api/announcements/' + path + (qs ? '?' + qs : ''));
+    const url = getBackendUrl('/api/announcements/' + path + (qs ? '?' + qs : '', req));
     const res = await fetch(url, {
       cache: 'no-store',
       headers: buildBackendHeaders(req),
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'admin/create';
     const body = await req.json();
-    const res = await fetch(getBackendUrl('/api/announcements/' + path), {
+    const res = await fetch(getBackendUrl('/api/announcements/' + path, req), {
       method: 'POST',
       headers: buildBackendHeaders(req),
       body: JSON.stringify(body),
@@ -55,7 +55,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, message: '缺少 path 参数' }, { status: 400 });
     }
     const body = await req.json();
-    const res = await fetch(getBackendUrl('/api/announcements/' + path), {
+    const res = await fetch(getBackendUrl('/api/announcements/' + path, req), {
       method: 'PUT',
       headers: buildBackendHeaders(req),
       body: JSON.stringify(body),
@@ -80,7 +80,7 @@ export async function DELETE(req: NextRequest) {
     if (!path) {
       return NextResponse.json({ success: false, message: '缺少 path 参数' }, { status: 400 });
     }
-    const res = await fetch(getBackendUrl('/api/announcements/' + path), {
+    const res = await fetch(getBackendUrl('/api/announcements/' + path, req), {
       method: 'DELETE',
       headers: buildBackendHeaders(req),
     });

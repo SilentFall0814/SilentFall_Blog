@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const page_id = searchParams.get('page_id') || '';
     const status = searchParams.get('status') || 'approved';
     const qs = new URLSearchParams({ page_id, status }).toString();
-    const res = await fetch(getBackendUrl('/api/comments/list?' + qs), {
+    const res = await fetch(getBackendUrl('/api/comments/list?' + qs, req), {
       cache: 'no-store',
       headers: buildBackendHeaders(req),
     });
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const res = await fetch(getBackendUrl('/api/comments/create'), {
+    const res = await fetch(getBackendUrl('/api/comments/create', req), {
       method: 'POST',
       headers: buildBackendHeaders(req),
       body: JSON.stringify(body),

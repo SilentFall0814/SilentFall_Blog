@@ -45,7 +45,7 @@ if ALLOWED_ORIGINS_RAW.strip() == "*":
     ALLOWED_ORIGINS = ["*"]
 else:
     ALLOWED_ORIGINS = [
-        s.strip() for s in ALLOWED_ORIGINS_RAW.split(",") if s.strip()
+        s.strip().rstrip("/") for s in ALLOWED_ORIGINS_RAW.split(",") if s.strip()
     ]
 
 # HTTP Bearer 认证（前端请求头：Authorization: Bearer <token>）

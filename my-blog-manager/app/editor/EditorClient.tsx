@@ -8,7 +8,17 @@ import FloatingImageTool from '../../components/editor/FloatingImageTool';
 import { useToast } from '../../components/ToastProvider';
 import { apiFetch } from '../../lib/apiFetch';
 
-export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: any) {
+interface EditorClientProps {
+  historyPostTags: string[];
+  historyChatterTags: string[];
+  historyMoods: string[];
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '未知错误';
+}
+
+export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: EditorClientProps) {
   const searchParams = useSearchParams();
   const docId = searchParams.get('id') || 'new';
   const docType = (searchParams.get('type') as 'post' | 'chatter' | 'about') || 'post';
@@ -74,7 +84,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
     }
     setIsSaving(true);
     const payload = {
-      blog_path: blogPath || "[REDACTED_LOCAL_PATH]",
+      blog_path: blogPath || "",
       id: docType === 'about' ? 'about' : (docId === 'new' ? null : docId),
       type: docType,
       title: docType === 'about' ? '关于我' : title,
@@ -142,8 +152,8 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
       } else {
         showToast('草稿已保存', 'success');
       }
-    } catch (e: any) {
-      showToast(`保存失败: ${e.message}`, 'error');
+    } catch (e: unknown) {
+      showToast(`保存失败: ${getErrorMessage(e)}`, 'error');
     } finally {
       setIsSaving(false);
       setLastSaved(new Date().toLocaleTimeString());

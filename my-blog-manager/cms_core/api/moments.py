@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from cms_core.database import get_comments_collection
 from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
+from cms_core.path_utils import read_target_blog_path
 
 router = APIRouter()
 
@@ -22,16 +23,7 @@ class MomentPayload(BaseModel):
 def _sync_moments_to_user_end():
     """将说说同步到用户端博客目录"""
     try:
-        # 读取部署配置
-        deploy_config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", "data", "deploy_config.json")
-        if not os.path.exists(deploy_config_path):
-            print("[说说同步] 未找到部署配置，跳过同步")
-            return
-
-        with open(deploy_config_path, "r", encoding="utf-8-sig") as f:
-            config = json.load(f)
-
-        blog_path = config.get("blogPath", "")
+        blog_path = read_target_blog_path()
         if not blog_path:
             print("[说说同步] 未配置博客路径，跳过同步")
             return

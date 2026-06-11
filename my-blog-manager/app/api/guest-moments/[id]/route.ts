@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const res = await fetch(getBackendUrl('/api/guest_moments/admin/status/' + id), {
+    const res = await fetch(getBackendUrl('/api/guest_moments/admin/status/' + id, req), {
       method: 'PUT',
       headers: buildBackendHeaders(request),
       body: JSON.stringify(body),
@@ -18,8 +18,8 @@ export async function PUT(
     }
     const data = await res.json();
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, message: error instanceof Error ? error.message : '服务器错误' }, { status: 500 });
   }
 }
 
@@ -29,7 +29,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const res = await fetch(getBackendUrl('/api/guest_moments/admin/' + id), {
+    const res = await fetch(getBackendUrl('/api/guest_moments/admin/' + id, req), {
       method: 'DELETE',
       headers: buildBackendHeaders(request),
     });
@@ -38,7 +38,7 @@ export async function DELETE(
     }
     const data = await res.json();
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, message: error instanceof Error ? error.message : '服务器错误' }, { status: 500 });
   }
 }

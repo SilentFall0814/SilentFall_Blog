@@ -9,6 +9,7 @@ from markdownify import markdownify as md
 from datetime import datetime
 from fastapi import APIRouter, Request, Depends
 from cms_core.security import get_current_admin, sanitize_payload, sanitize_nosql_field
+from cms_core.path_utils import read_target_blog_path, is_safe_blog_dir
 
 router = APIRouter()
 
@@ -24,19 +25,6 @@ SYNC_FILES = [
     "data/steam.ts",
     "siteConfig.ts"
 ]
-
-DEPLOY_CONFIG_PATH = os.path.join(PROJECT_ROOT, "data", "deploy_config.json")
-
-
-def _read_blog_path() -> str:
-    if os.path.exists(DEPLOY_CONFIG_PATH):
-        try:
-            with open(DEPLOY_CONFIG_PATH, "r", encoding="utf-8-sig") as f:
-                cfg = json.load(f)
-            return cfg.get("blogPath", "")
-        except Exception:
-            pass
-    return ""
 
 
 def _get_drafts_dir() -> str:
@@ -356,13 +344,8 @@ def _execute_blog_sync(target_path: str) -> tuple[bool, str]:
 
 @router.get("/config")
 async def get_sync_config():
-    blog_path = _read_blog_path()
+    blog_path = read_target_blog_path()
     return {"blogPath": blog_path}
-
-
-def is_safe_blog_dir(target_path):
-    """防呆检测：只有包含 package.json 的才被认为是安全的博客目录"""
-    return os.path.exists(os.path.join(target_path, "package.json"))
 
 
 @router.post("/check")
@@ -371,7 +354,7 @@ async def check_blog_path(request: Request, _=Depends(get_current_admin)):
     try:
         raw_payload = await request.json()
         payload = sanitize_payload(raw_payload)
-        target_path = payload.get("blogPath", "").strip()
+        target_path = payload.get("blogPath", "").strip() or read_target_blog_path()
 
         if not target_path or not os.path.exists(target_path):
             return {"success": False, "message": "🚫 目标物理路径不存在，请检查输入！"}
@@ -400,7 +383,7 @@ async def execute_sync(request: Request, _=Depends(get_current_admin)):
     try:
         raw_payload = await request.json()
         payload = sanitize_payload(raw_payload)
-        target_path = payload.get("blogPath", "").strip()
+        target_path = payload.get("blogPath", "").strip() or read_target_blog_path()
 
         if not is_safe_blog_dir(target_path):
             return {"success": False, "message": "安全拦截：目标路径不合法！"}
@@ -456,7 +439,7 @@ async def publish_and_sync(request: Request, _=Depends(get_current_admin)):
         raw_payload = await request.json()
         payload = sanitize_payload(raw_payload)
         operations = payload.get("operations", [])
-        target_blog_path = payload.get("blogPath", "").strip()
+        target_blog_path = payload.get("blogPath", "").strip() or read_target_blog_path()
 
         if not operations:
             return {"success": False, "message": "🚫 没有待发布的变更", "step": "idle"}
@@ -472,9 +455,6 @@ async def publish_and_sync(request: Request, _=Depends(get_current_admin)):
             }
 
         # ========== 阶段 2：同步到博客目录 ==========
-        if not target_blog_path:
-            target_blog_path = _read_blog_path()
-
         if not target_blog_path:
             return {
                 "success": True,

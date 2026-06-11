@@ -5,7 +5,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'get';
-    const res = await fetch(getBackendUrl('/api/config/' + path), {
+    const res = await fetch(getBackendUrl('/api/config/' + path, req), {
       cache: 'no-store',
       headers: buildBackendHeaders(req),
     });
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'update';
     const body = await req.json();
-    const res = await fetch(getBackendUrl('/api/config/' + path), {
+    const res = await fetch(getBackendUrl('/api/config/' + path, req), {
       method: 'POST',
       headers: buildBackendHeaders(req),
       body: JSON.stringify(body),

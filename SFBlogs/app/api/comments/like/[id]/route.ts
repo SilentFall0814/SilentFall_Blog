@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const BACKEND_URL = process.env.CMS_BACKEND_URL || 'http://127.0.0.1:8765';
+import { getBackendUrl } from '../../../../../lib/backendTarget';
 
 export async function POST(
   req: NextRequest,
@@ -8,7 +7,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const res = await fetch(`${BACKEND_URL}/api/comments/like/${id}`, { method: 'POST' });
+    const res = await fetch(getBackendUrl(`/api/comments/like/${id}`, req), { method: 'POST' });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {

@@ -5,8 +5,19 @@ import { useSearchParams } from 'next/navigation';
 import RichTextEditor, { RichTextEditorHandle } from '../../components/editor/RichTextEditor';
 import MetaMatrix from '../../components/editor/MetaMatrix';
 import FloatingImageTool from '../../components/editor/FloatingImageTool';
+import { apiFetch } from '../../lib/apiFetch';
 
-export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: any) {
+interface EditorClientProps {
+  historyPostTags: string[];
+  historyChatterTags: string[];
+  historyMoods: string[];
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '未知错误';
+}
+
+export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: EditorClientProps) {
   const searchParams = useSearchParams();
 
   // 使用 state 追踪当前文档 ID，以便新建草稿保存后更新 ID
@@ -41,12 +52,10 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
     if (currentDocId !== 'new') {
       const loadDraft = async () => {
         try {
-          const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-          const config = await configRes.json();
-          const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/get`, {
+          const res = await apiFetch('/api/drafts?path=get', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ blog_path: "[REDACTED_LOCAL_PATH]", id: currentDocId })
+            body: JSON.stringify({ id: currentDocId, type: docType })
           });
           const data = await res.json();
           if (data.success) {
@@ -73,7 +82,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
     setIsSaving(true);
 
     const payload = {
-      blog_path: "[REDACTED_LOCAL_PATH]",
+      blog_path: localStorage.getItem('targetBlogPath') || "",
       id: docType === 'about' ? 'about' : (currentDocId === 'new' ? null : currentDocId),
       type: docType,
       title: docType === 'about' ? '关于我' : title,
@@ -86,10 +95,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
     };
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-
-      const res = await fetch(`http://127.0.0.1:${config.api_port}/api/drafts/save`, {
+      const res = await apiFetch('/api/drafts?path=save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -131,12 +137,8 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
     setSyncProgress("💾 草稿已保存，正在同步到博客...");
 
     try {
-      const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const config = await configRes.json();
-      const apiBase = `http://127.0.0.1:${config.api_port}`;
-
       // 获取目标博客路径
-      const syncConfigRes = await fetch(`${apiBase}/api/sync/config`);
+      const syncConfigRes = await apiFetch('/api/sync?path=config');
       let blogPath = "";
       if (syncConfigRes.ok) {
         const syncConfigData = await syncConfigRes.json();
@@ -161,7 +163,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
 
       setSyncProgress("🚀 正在同步到博客目录...");
 
-      const res = await fetch(`${apiBase}/api/sync/publish_and_sync`, {
+      const res = await apiFetch('/api/sync?path=publish_and_sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,12 +189,12 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
           alert(`❌ ${data.message}`);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setSyncProgress("❌ 网络异常");
-      if (error.name === 'TimeoutError') {
+      if (error instanceof Error && error.name === 'TimeoutError') {
         alert("⏱️ 网络连接超时，文章已保存到本地，请稍后重试同步");
       } else {
-        alert(`🌐 同步异常：${error.message}`);
+        alert(`🌐 同步异常：${getErrorMessage(error)}`);
       }
     } finally {
       setIsSyncing(false);

@@ -15,15 +15,18 @@ function getRequestOrigin(req: NextRequest): string {
   return req.nextUrl.origin;
 }
 
-function resolveBackendBaseUrl(req?: NextRequest): string {
+function resolveBackendBaseUrl(req: NextRequest): string {
   const envBackendUrl = process.env.CMS_BACKEND_URL?.trim();
   if (envBackendUrl) {
     return normalizeBaseUrl(envBackendUrl);
   }
 
-  if (req) {
-    const backendBasePath = (process.env.CMS_BACKEND_BASE_PATH || "/cms-api").trim();
-    return `${normalizeBaseUrl(getRequestOrigin(req))}${backendBasePath.startsWith("/") ? backendBasePath : `/${backendBasePath}`}`;
+  const backendBasePath = (process.env.CMS_BACKEND_BASE_PATH || "/cms-api").trim();
+  if (backendBasePath) {
+    const normalizedBasePath = backendBasePath.startsWith("/")
+      ? backendBasePath
+      : `/${backendBasePath}`;
+    return `${normalizeBaseUrl(getRequestOrigin(req))}${normalizedBasePath}`;
   }
 
   if (process.env.NODE_ENV !== "production") {
@@ -33,14 +36,6 @@ function resolveBackendBaseUrl(req?: NextRequest): string {
   throw new Error("未配置 CMS_BACKEND_URL，且当前请求无法推断后端地址");
 }
 
-export function getBackendUrl(pathPart: string, req?: NextRequest): string {
+export function getBackendUrl(pathPart: string, req: NextRequest): string {
   return `${resolveBackendBaseUrl(req)}${pathPart}`;
 }
-
-export function buildBackendHeaders(req: NextRequest): Record<string, string> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const auth = req.headers.get("authorization");
-  if (auth) headers["Authorization"] = auth;
-  return headers;
-}
-export { resolveBackendBaseUrl };

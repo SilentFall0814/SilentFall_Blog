@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path') || 'save';
     const body = await req.json();
-    const res = await fetch(getBackendUrl('/api/moments/' + path), {
+    const res = await fetch(getBackendUrl('/api/moments/' + path, req), {
       method: 'POST',
       headers: buildBackendHeaders(req),
       body: JSON.stringify(body),

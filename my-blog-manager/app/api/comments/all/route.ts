@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const page_size = searchParams.get('page_size') || '20';
     const status = searchParams.get('status') || 'all';
     const qs = new URLSearchParams({ page, page_size, status }).toString();
-    const res = await fetch(getBackendUrl('/api/comments/all?' + qs), {
+    const res = await fetch(getBackendUrl('/api/comments/all?' + qs, req), {
       cache: 'no-store',
       headers: buildBackendHeaders(req),
     });

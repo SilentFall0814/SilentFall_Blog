@@ -4,7 +4,7 @@ import { getBackendUrl, buildBackendHeaders } from '../../../../lib/backendProxy
 // GET: 获取评论统计
 export async function GET(req: NextRequest) {
   try {
-    const res = await fetch(getBackendUrl('/api/comments/stats'), {
+    const res = await fetch(getBackendUrl('/api/comments/stats', req), {
       cache: 'no-store',
       headers: buildBackendHeaders(req),
     });

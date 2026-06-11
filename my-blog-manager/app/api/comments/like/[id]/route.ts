@@ -7,7 +7,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const res = await fetch(getBackendUrl('/api/comments/like/' + id), {
+    const res = await fetch(getBackendUrl('/api/comments/like/' + id, req), {
       method: 'POST',
       headers: buildBackendHeaders(req),
     });

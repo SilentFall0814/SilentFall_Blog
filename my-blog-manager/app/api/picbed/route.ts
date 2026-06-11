@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     // 图床上传接口使用 FormData，不能手动设置 Content-Type
     if (path === 'upload' || path === 'upload_local') {
       const formData = await req.formData();
-      const backendUrl = getBackendUrl('/api/picbed/' + path);
+      const backendUrl = getBackendUrl('/api/picbed/' + path, req);
       const headers: Record<string, string> = {};
       const auth = req.headers.get('authorization');
       if (auth) headers['Authorization'] = auth;
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     // 其他接口使用 JSON
     const body = await req.json();
-    const res = await fetch(getBackendUrl('/api/picbed/' + path), {
+    const res = await fetch(getBackendUrl('/api/picbed/' + path, req), {
       method: 'POST',
       headers: buildBackendHeaders(req),
       body: JSON.stringify(body),

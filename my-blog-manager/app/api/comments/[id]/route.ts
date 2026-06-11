@@ -8,7 +8,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const res = await fetch(getBackendUrl('/api/comments/' + id), {
+    const res = await fetch(getBackendUrl('/api/comments/' + id, req), {
       method: 'DELETE',
       headers: buildBackendHeaders(request),
     });
@@ -17,7 +17,7 @@ export async function DELETE(
     }
     const data = await res.json();
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, message: error instanceof Error ? error.message : '服务器错误' }, { status: 500 });
   }
 }

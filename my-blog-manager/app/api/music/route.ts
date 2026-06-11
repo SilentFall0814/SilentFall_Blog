@@ -5,7 +5,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const songId = searchParams.get('id') || '';
-    const res = await fetch(getBackendUrl('/api/music/query/' + songId), {
+    const res = await fetch(getBackendUrl('/api/music/query/' + songId, req), {
       cache: 'no-store',
       headers: buildBackendHeaders(req),
     });

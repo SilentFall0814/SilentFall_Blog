@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,18 +11,32 @@ from cms_core.api import steam
 from cms_core.api import announcements
 from cms_core.api import auth
 from cms_core.security import ALLOWED_ORIGINS
+from cms_core.database import validate_database_connection
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+
+logger = logging.getLogger("silentfall.cms.main")
+allow_credentials = ALLOWED_ORIGINS != ["*"]
 
 app = FastAPI(title="SilentFall_Blog CMS Backend", version="1.0.0")
 
-# 🌟 安全加固：CORS 改为白名单模式，从 CMS_ALLOWED_ORIGINS 环境变量读取
-#    生产环境请务必设置具体域名，例如：http://localhost:3001,https://yourblog.com
+# 安全加固：跨域来源从环境变量读取；未收敛到白名单时自动关闭凭证模式。
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],  # 允许所有请求方法 (GET, POST 等)
-    allow_headers=["*"],  # 允许所有请求头
+    allow_credentials=allow_credentials,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def on_startup():
+    logger.info("后端服务启动，当前 CORS 白名单=%s", ",".join(ALLOWED_ORIGINS))
+    validate_database_connection()
 
 @app.get("/api/status")
 def get_status():

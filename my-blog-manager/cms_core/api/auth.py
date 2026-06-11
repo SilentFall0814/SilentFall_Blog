@@ -20,10 +20,13 @@ from cms_core.security import (
 
 router = APIRouter()
 
-# 从环境变量读取密码哈希值（通过 hash_password.py 工具生成）
-# 示例：CMS_ADMIN_PASSWORD_HASH=$2b$12$...
-ADMIN_PASSWORD_HASH = os.environ.get("CMS_ADMIN_PASSWORD_HASH", "")
+# 管理员用户名（模块级常量）
 ADMIN_USERNAME = os.environ.get("CMS_ADMIN_USERNAME", "admin")
+
+
+def get_admin_password_hash() -> str:
+    """动态获取管理员密码哈希（每次请求时读取，确保环境变量更新生效）"""
+    return os.environ.get("CMS_ADMIN_PASSWORD_HASH", "")
 
 
 @router.post("/login")
@@ -43,11 +46,14 @@ async def login(request: Request, payload: LoginRequest):
             detail="请求过于频繁，请稍后再试",
         )
 
-    # 2) 密码校验（使用恒定时间对比，防止时序攻击）
+    # 2) 动态读取密码哈希（确保环境变量更新后生效）
+    admin_password_hash = get_admin_password_hash()
+
+    # 密码校验（使用恒定时间对比，防止时序攻击）
     #    注意：即使未配置哈希，也必须走一次 verify_password 以保持时间恒定
     password_ok = False
-    if ADMIN_PASSWORD_HASH:
-        password_ok = verify_password(payload.password, ADMIN_PASSWORD_HASH)
+    if admin_password_hash:
+        password_ok = verify_password(payload.password, admin_password_hash)
 
     # 人为增加一点恒定等待，降低时序攻击收益
     time.sleep(0.05)

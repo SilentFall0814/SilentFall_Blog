@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path') || 'overview';
 
-    const backendUrl = new URL(getBackendUrl('/api/analytics/' + path));
+    const backendUrl = new URL(getBackendUrl('/api/analytics/' + path, request));
     searchParams.forEach((value, key) => {
       if (key !== 'path') {
         backendUrl.searchParams.set(key, value);
@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
 
     const data = await res.json();
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: `后端连接失败: ${error.message}`, data: null },
+      { success: false, message: `后端连接失败: ${error instanceof Error ? error.message : '服务器错误'}`, data: null },
       { status: 502 }
     );
   }

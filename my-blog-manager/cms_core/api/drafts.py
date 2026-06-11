@@ -10,6 +10,7 @@ import markdown  # 确保你已经安装了 markdown 库 (pip install markdown)
 from markdownify import markdownify as md
 from cms_core.database import get_comments_collection
 from cms_core.security import get_current_admin, sanitize_payload
+from cms_core.path_utils import read_target_blog_path
 
 router = APIRouter()
 
@@ -17,29 +18,13 @@ router = APIRouter()
 CURRENT_API_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_API_DIR, "..", ".."))
 
-
-DEPLOY_CONFIG_PATH = os.path.join(PROJECT_ROOT, "data", "deploy_config.json")
-
-
-def _read_blog_path() -> str:
-    """读取配置的目标博客路径"""
-    if os.path.exists(DEPLOY_CONFIG_PATH):
-        try:
-            with open(DEPLOY_CONFIG_PATH, "r", encoding="utf-8-sig") as f:
-                cfg = json.load(f)
-            return cfg.get("blogPath", "")
-        except Exception:
-            pass
-    return ""
-
-
 def _sync_delete_to_blog(file_path: str, relative_path: str):
     """
     当管理端删除文章后，同步删除博客用户端的对应文件
     :param file_path: 管理端已删除的文件路径（用于日志）
     :param relative_path: 相对于项目根目录的路径（如 posts/xxx.md）
     """
-    blog_path = _read_blog_path()
+    blog_path = read_target_blog_path()
     if not blog_path:
         print(f"[同步删除] 未配置目标博客路径，跳过同步")
         return False

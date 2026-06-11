@@ -52,7 +52,7 @@ export default function Navbar() {
           }
         }
       } catch (e) {
-        const path = localStorage.getItem('targetBlogPath') || "[REDACTED_LOCAL_PATH]";
+        const path = localStorage.getItem('targetBlogPath') || "";
         setTargetBlogPath(path);
       }
     };
@@ -341,7 +341,7 @@ export default function Navbar() {
 
   const handleSyncBlogClick = () => {
     if (!targetBlogPath) {
-       const fallback = localStorage.getItem('targetBlogPath') || "[REDACTED_LOCAL_PATH]";
+       const fallback = localStorage.getItem('targetBlogPath') || "";
        setTargetBlogPath(fallback);
     }
     setIsOpBoxOpen(false);
