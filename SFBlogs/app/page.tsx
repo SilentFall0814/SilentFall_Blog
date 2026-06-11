@@ -11,6 +11,7 @@ import ThemeToggleBlock from '../components/ThemeToggleBlock';
 import ProfileCard from '../components/ProfileCard';
 import { albums } from '../data/albums';
 import { ToastProvider } from '../components/ToastProvider';
+import { getMomentsDirectory, getPostsDirectory } from '../lib/contentRoot';
 
 import { CloudPlayer, LatestPostsCarousel, LatestChatterCarousel, SiteDashboard, LyricBar } from '../components/HomeDynamicImports';
 import DanmakuBackground from '../components/DanmakuBackground';
@@ -66,15 +67,15 @@ function readMdDir(dirPath: string, type: 'article' | 'moment' = 'article') {
   return items;
 }
 
-export const revalidate = 600;
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
-  const chattersDirectory = path.join(process.cwd(), 'posts');
+  const chattersDirectory = getPostsDirectory();
   const allArticles = readMdDir(chattersDirectory);
   const top5Articles = allArticles.length > 0 ? allArticles.slice(0, 5) : [{ slug: 'none', title: '暂无文章', description: '快去写第一篇吧！', cover: siteConfig.defaultPostCover, date: '', formattedDate: '' }];
 
   // 说说数据：moments 目录
-  const momentsDirectory = path.join(process.cwd(), 'moments');
+  const momentsDirectory = getMomentsDirectory();
   const allMoments = readMdDir(momentsDirectory, 'moment');
   const top5Moments = allMoments.length > 0 ? allMoments.slice(0, 5) : [{ slug: 'none', title: '暂无说说', description: '记录一段思绪...', cover: siteConfig.defaultPostCover, date: '', formattedDate: '' }];
 

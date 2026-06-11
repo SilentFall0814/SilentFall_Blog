@@ -6,8 +6,9 @@ import PageTransition from '../../components/PageTransition';
 import { siteConfig } from '../../siteConfig';
 import TimelineClient from '../../components/TimelineClient';
 import { projectsData } from '../../data/projects';
+import { getMomentContentDirectories, getPostsDirectory } from '../../lib/contentRoot';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "归档 | SilentFall の 博客",
@@ -38,7 +39,7 @@ export default function Timeline() {
   }
 
   // 读取文章数据（posts 目录）
-  const chattersDirectory = path.join(process.cwd(), 'posts');
+  const chattersDirectory = getPostsDirectory();
   try {
     if (fs.existsSync(chattersDirectory)) {
       const fileNames = fs.readdirSync(chattersDirectory).filter(f => f.endsWith('.md'));
@@ -87,10 +88,7 @@ export default function Timeline() {
   }
 
   // 读取说说数据（检查多个可能的目录）
-  const momentDirs = [
-    path.join(process.cwd(), 'moments'),
-    path.join(process.cwd(), 'posts', 'moments'),
-  ];
+  const momentDirs = getMomentContentDirectories();
 
   momentDirs.forEach(dir => {
     try {

@@ -60,9 +60,9 @@ import BackButton from '../../../components/BackButton';
 import SidebarLyric from "@/components/SidebarLyric";
 import Comments from '../../../components/DynamicComments';
 import { ArticleVisitTracker } from '../../../components/ArticleVisitTracker';
+import { getPostsDirectory } from '../../../lib/contentRoot';
 
-// 🌟 改为较短的 ISR 重新验证时间，新文章发布后最多 60 秒可访问
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 // 🌟 返回空数组，让所有文章在首次访问时动态生成
 // 这样新发布的文章无需重新构建即可访问
@@ -85,7 +85,7 @@ function extractToc(content: string) {
 }
 
 async function getPostData(slug: string) {
-  const fullPath = path.join(process.cwd(), 'posts', `${slug}.md`);
+  const fullPath = path.join(getPostsDirectory(), `${slug}.md`);
   if (!fs.existsSync(fullPath)) {
     notFound();
   }
@@ -114,7 +114,7 @@ async function getPostData(slug: string) {
 }
 
 function getRecentPosts(currentSlug: string) {
-  const postsDirectory = path.join(process.cwd(), 'posts');
+  const postsDirectory = getPostsDirectory();
   let fileNames: string[] = [];
   try { fileNames = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md')); } catch(e) {}
   if (!fileNames) return [];

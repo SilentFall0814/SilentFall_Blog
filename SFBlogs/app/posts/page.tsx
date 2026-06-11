@@ -4,9 +4,10 @@ import matter from 'gray-matter';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import PostsBoard from '../../components/PostsBoard';
+import { getPostsDirectory } from '../../lib/contentRoot';
 
 
-export const revalidate = 600;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "文章 | SilentFall の 博客",
@@ -14,7 +15,7 @@ export const metadata = {
 };
 
 export default function PostsPage() {
-  const postsDirectory = path.join(process.cwd(), 'posts');
+  const postsDirectory = getPostsDirectory();
   let posts = [];
 
   try {
