@@ -1,0 +1,76 @@
+package com.silentfall.blog.service.impl;
+
+import com.silentfall.blog.constant.JwtClaimsConstant;
+import com.silentfall.blog.properties.JwtProperties;
+import com.silentfall.blog.service.TokenService;
+import com.silentfall.blog.utils.JwtUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+@Service
+@Slf4j
+public class TokenServiceImpl implements TokenService {
+
+    @Autowired
+    @Qualifier("redisTemplate")
+    private RedisTemplate redis;
+    @Autowired
+    private JwtProperties jwtProperties;
+
+    private static final String TOKEN_PREFIX = "token:active:";
+
+    /**
+     * 创建并保存token
+     */
+    public String createAndStoreToken(String userId, Integer role) {
+        // 生成token
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(JwtClaimsConstant.ADMIN_ID,userId);
+        claims.put(JwtClaimsConstant.ADMIN_ROLE,role);
+        String token = JwtUtil.createJWT(
+                jwtProperties.getSecretKey(),
+                jwtProperties.getTtl(),
+                claims);
+
+        // 将token存储至Redis,用set可以多端登录
+        String tokenKey = TOKEN_PREFIX + userId;
+        redis.opsForSet().add(tokenKey, token);
+        redis.expire(tokenKey, jwtProperties.getTtl(), TimeUnit.MILLISECONDS);
+
+        return token;
+    }
+
+    /**
+     * 验证token有效性
+     * @param userId
+     * @param token
+     * @return
+     */
+    public boolean isValidToken(String userId, String token) {
+        String key = TOKEN_PREFIX + userId;
+        return Boolean.TRUE.equals(redis.opsForSet().isMember(key, token));
+    }
+
+    /**
+     * 退出登录 - 删除token
+     */
+    public void logout(String userId, String token) {
+        String key = TOKEN_PREFIX + userId;
+        redis.opsForSet().remove(key, token);
+    }
+
+    /**
+     * 退出登录 - 删除所有token
+     */
+    public void logoutAll(String userId) {
+        String key = TOKEN_PREFIX + userId;
+        redis.delete(key);
+    }
+}

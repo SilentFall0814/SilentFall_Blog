@@ -1,0 +1,13 @@
+silentfall:
+  mongodb:
+    uri: mongodb://your_production_mongodb_host:27017/silentfall
+  redis:
+    host: your_production_redis_host
+    port: 6379
+    password: your_redis_password
+    database: 0
+  jwt:
+    ttl: 604800000
+  local-storage:
+    base-path: /app/uploads
+    url-prefix: /uploads

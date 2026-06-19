@@ -1,0 +1,11 @@
+# 前端静态文件目录
+#
+# 在此目录下创建以下子目录，并将构建后的前端文件放入：
+# - SilentFall.cc/html     (主站)
+# - blog.SilentFall.cc/html (博客)
+# - cv.SilentFall.cc/html  (简历)
+# - admin.SilentFall.cc/html (管理后台)
+#
+# 示例:
+# mkdir -p docker/html/SilentFall.cc/html
+# cp -r Frontend-Home/dist/* docker/html/SilentFall.cc/html/

@@ -1,0 +1,13 @@
+silentfall:
+  mongodb:
+    uri: mongodb://localhost:27017/silentfall
+  redis:
+    host: localhost
+    port: 6379
+    password: your_redis_password
+    database: 0
+  jwt:
+    ttl: 604800000
+  local-storage:
+    base-path: ./uploads
+    url-prefix: /uploads

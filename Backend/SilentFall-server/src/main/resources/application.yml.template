@@ -1,0 +1,63 @@
+server:
+  port: 5922
+
+spring:
+  application:
+    name: SilentFallBlog
+  profiles:
+    active: dev
+  threads:
+    virtual:
+      enabled: true
+  main:
+    allow-circular-references: true
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 50MB
+  # MongoDB配置
+  data:
+    mongodb:
+      uri: ${silentfall.mongodb.uri}
+      auto-index-creation: true
+    redis:
+      host: ${silentfall.redis.host}
+      port: ${silentfall.redis.port}
+      password: ${silentfall.redis.password}
+      database: ${silentfall.redis.database}
+
+# MongoDB日志级别
+logging:
+  level:
+    com:
+      silentfall:
+        blog:
+          repository: debug
+          service: info
+          controller: info
+    org:
+      springframework:
+        data:
+          mongodb: info
+
+silentfall:
+  jwt:
+    secret-key: your-jwt-secret-key-here
+    ttl: ${silentfall.jwt.ttl}
+    token-name: Authorization
+  local-storage:
+    base-path: ${silentfall.local-storage.base-path:./uploads}
+    url-prefix: ${silentfall.local-storage.url-prefix:/uploads}
+  visitor:
+    verify-code: ${silentfall.visitor.verify-code}
+  image:
+    compress:
+      enabled: true
+      max-size-kb: 500
+      quality: 0.9
+      output-format: webp
+  website:
+    title: ${silentfall.website.title}
+    home: ${silentfall.website.home}
+    admin: ${silentfall.website.admin}
+    blog: ${silentfall.website.blog}

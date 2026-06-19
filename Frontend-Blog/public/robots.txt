@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://blog.silentfall.blog/api/blog/sitemap.xml

@@ -1,0 +1,70 @@
+# Docker 生产环境配置
+# 使用 docker-compose 传入的环境变量
+server:
+  port: 5922
+  tomcat:
+    # 不限制 Tomcat 单次读取的请求体大小，避免大文件上传被截断
+    max-swallow-size: -1
+    max-http-form-post-size: -1
+  error:
+    include-stacktrace: never
+    include-message: never
+    whitelabel:
+      enabled: false
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  main:
+    allow-circular-references: true
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 50MB
+  # MongoDB配置
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongodb:27017/silentfall}
+      auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+
+# JWT 配置
+silentfall:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}
+    ttl: ${JWT_TTL:86400000}
+    token-name: Authorization
+  local-storage:
+    base-path: ${LOCAL_STORAGE_PATH:./uploads}
+    url-prefix: /uploads
+  image:
+    compress:
+      enabled: ${IMAGE_COMPRESS_ENABLED:true}
+      max-size-kb: ${IMAGE_COMPRESS_MAX_SIZE:500}
+      quality: ${IMAGE_COMPRESS_QUALITY:0.9}
+      output-format: webp
+  website:
+    title: ${WEBSITE_TITLE:}
+    home: ${WEBSITE_HOME:}
+    admin: ${WEBSITE_ADMIN:}
+    blog: ${WEBSITE_BLOG:}
+
+# 日志配置
+logging:
+  level:
+    com.silentfall.blog: INFO
+    com.silentfall.blog.repository: DEBUG
+    org.springframework.web.servlet.PageNotFound: ERROR
+    org.springframework.web: WARN
+    org.apache.tomcat: ERROR
+    org.springframework.data.mongodb: INFO
+    org.springframework: WARN
+    org.apache.coyote: ERROR
+    org.apache.catalina: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

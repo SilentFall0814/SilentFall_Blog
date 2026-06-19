@@ -1,0 +1,61 @@
+# IDE and Editor files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+nbproject/
+.project
+.classpath
+.settings/
+build/
+.DS_Store
+Thumbs.db
+
+# Java/Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Log files
+*.log
+logs/
+
+# Node.js/Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env.*
+.output
+coverage/
+
+# Package manager files
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Configuration files with sensitive data
+**/application.yml
+**/application-*.yml
+!**/application.yml.template
+!**/application-*.yml.template
+# Docker configurations (non-sensitive, for deployment)
+!Backend/SilentFall-server/src/main/resources/application-docker.yml
+!/docker-compose.yml
+!/Dockerfile
+
+# Runtime data and third-party software
+# 后端运行时上传的文件（图片、音乐、歌词等），属于运行时数据，不应入库
+**/uploads/
+# Windows 版 Redis 完整安装目录，属于第三方软件，不应入库
+redis/
+
+CLAUDE.md

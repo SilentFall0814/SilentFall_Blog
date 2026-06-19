@@ -1,0 +1,85 @@
+package com.silentfall.blog.controller.blog;
+
+import com.silentfall.blog.annotation.RateLimit;
+import com.silentfall.blog.dto.ArticleCommentDTO;
+import com.silentfall.blog.dto.ArticleCommentEditDTO;
+import com.silentfall.blog.result.Result;
+import com.silentfall.blog.service.ArticleCommentService;
+import com.silentfall.blog.service.VisitorTokenService;
+import com.silentfall.blog.vo.ArticleCommentVO;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 博客端文章评论接口
+ */
+@RestController("blogArticleCommentController")
+@RequestMapping("/blog/articleComment")
+@Slf4j
+public class ArticleCommentController {
+
+    @Autowired
+    private ArticleCommentService articleCommentService;
+    @Autowired
+    private VisitorTokenService visitorTokenService;
+
+    /**
+     * 根据文章ID获取评论列表（树形结构，含当前访客的未审核评论）
+     */
+    @GetMapping("/article/{articleId}")
+    public Result<List<ArticleCommentVO>> getCommentTree(@PathVariable String articleId,
+                                                         @RequestParam(required = false) String visitorId) {
+        log.info("博客端获取文章评论树: articleId={}, visitorId={}", articleId, visitorId);
+        List<ArticleCommentVO> commentTree = articleCommentService.getCommentTree(articleId, visitorId);
+        return Result.success(commentTree);
+    }
+
+    /**
+     * 提交评论（添加评论/回复评论）
+     */
+    @PostMapping
+    @RateLimit(type = RateLimit.Type.IP, tokens = 5, burstCapacity = 8,
+              timeWindow = 60, message = "评论过于频繁，请稍后再试")
+    public Result<String> submitComment(@Valid @RequestBody ArticleCommentDTO articleCommentDTO,
+                                        HttpServletRequest request) {
+        // 验证访客身份，覆盖DTO中的visitorId，防止伪造
+        String visitorId = visitorTokenService.resolveVisitorId(request);
+        articleCommentDTO.setVisitorId(visitorId);
+        log.info("访客提交文章评论: {}", articleCommentDTO);
+        articleCommentService.submitComment(articleCommentDTO, request);
+        return Result.success();
+    }
+
+    /**
+     * 访客编辑评论
+     */
+    @PutMapping("/edit")
+    @RateLimit(type = RateLimit.Type.IP, tokens = 5, burstCapacity = 8,
+              timeWindow = 60, message = "操作过于频繁，请稍后再试")
+    public Result<String> editComment(@Valid @RequestBody ArticleCommentEditDTO editDTO,
+                                      HttpServletRequest request) {
+        String visitorId = visitorTokenService.resolveVisitorId(request);
+        editDTO.setVisitorId(visitorId);
+        log.info("访客编辑评论: {}", editDTO);
+        articleCommentService.editComment(editDTO);
+        return Result.success();
+    }
+
+    /**
+     * 访客删除评论
+     */
+    @DeleteMapping("/{id}")
+    @RateLimit(type = RateLimit.Type.IP, tokens = 5, burstCapacity = 8,
+              timeWindow = 60, message = "操作过于频繁，请稍后再试")
+    public Result<String> deleteComment(@PathVariable String id, HttpServletRequest request) {
+        String visitorId = visitorTokenService.resolveVisitorId(request);
+        log.info("访客删除评论: id={}, visitorId={}", id, visitorId);
+        articleCommentService.visitorDeleteComment(id, visitorId);
+        return Result.success();
+    }
+}
