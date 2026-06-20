@@ -288,8 +288,23 @@ const getAvatarUrl = (c) => {
 const getInitial = (name) => (name ? name.charAt(0).toUpperCase() : '?')
 
 const copyLink = async () => {
+  const text = window.location.href
   try {
-    await navigator.clipboard.writeText(window.location.href)
+    // 优先使用 Clipboard API（需要 HTTPS 或 localhost 安全上下文）
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      // HTTP 环境下降级使用 execCommand
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.focus()
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
     ElMessage.success('链接已复制')
   } catch {
     ElMessage.error('复制失败')

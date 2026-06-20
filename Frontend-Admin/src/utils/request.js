@@ -20,6 +20,43 @@ const getToken = () => {
   return localStorage.getItem('admin_token') || ''
 }
 
+/**
+ * 递归规范化响应数据中的上传文件 URL
+ * 将 /uploads/ 开头的相对路径转换为 /api/uploads/，通过 Nginx 的 /api/ 反向代理访问后端静态资源
+ * 同时处理 HTML 内容中的 src/href 属性和 Markdown 中的图片语法
+ */
+const normalizeUploadUrls = (data) => {
+  if (data === null || data === undefined) return data
+  if (typeof data === 'string') {
+    // 字符串本身就是 /uploads/ 开头的 URL（如 coverImage、musicUrl 等字段）
+    if (data.startsWith('/uploads/')) {
+      return '/api' + data
+    }
+    // HTML 内容中的 src="/uploads/..." 或 href="/uploads/..."
+    if (data.includes('/uploads/')) {
+      let result = data.replace(
+        /((?:src|href)\s*=\s*["'])\/uploads\//gi,
+        '$1/api/uploads/'
+      )
+      // Markdown 图片语法: ![](/uploads/...)
+      result = result.replace(/(\]\()\/uploads\//g, '$1/api/uploads/')
+      return result
+    }
+    return data
+  }
+  if (Array.isArray(data)) {
+    return data.map(normalizeUploadUrls)
+  }
+  if (typeof data === 'object') {
+    const result = {}
+    for (const key in data) {
+      result[key] = normalizeUploadUrls(data[key])
+    }
+    return result
+  }
+  return data
+}
+
 http.interceptors.request.use(
   (config) => {
     const token = getToken()
@@ -41,7 +78,9 @@ http.interceptors.response.use(
   (response) => {
     const { data } = response
     if (data?.code === 1) {
-      return data
+      // 规范化响应中的上传文件 URL
+      response.data = normalizeUploadUrls(data)
+      return response.data
     }
     ElMessage.error(data?.msg || '请求失败')
     return Promise.reject(data)

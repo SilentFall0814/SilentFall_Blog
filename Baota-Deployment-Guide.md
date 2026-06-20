@@ -219,8 +219,8 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # 后端 API 反向代理
-    location /api/ {
+    # 后端 API 反向代理（使用 ^~ 提升匹配优先级，避免被下方的静态资源正则规则拦截 /api/uploads/ 等路径）
+    location ^~ /api/ {
         proxy_pass http://127.0.0.1:5922/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -238,7 +238,7 @@ server {
     }
 
     # WebSocket 支持（在线人数统计）
-    location /api/ws/online {
+    location ^~ /api/ws/online {
         proxy_pass http://127.0.0.1:5922/ws/online;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -275,8 +275,8 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # 后端 API 反向代理
-    location /api/ {
+    # 后端 API 反向代理（使用 ^~ 提升匹配优先级，避免被下方的静态资源正则规则拦截 /api/uploads/ 等路径）
+    location ^~ /api/ {
         proxy_pass http://127.0.0.1:5922/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

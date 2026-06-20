@@ -396,7 +396,8 @@ public class ArticleServiceImpl implements ArticleService {
                         .id(a.getId())
                         .title(a.getTitle())
                         .slug(a.getSlug())
-                        .publishDay(a.getPublishDay())
+                        // publishDay 可能为空，从 publishTime 派生
+                        .publishDay(a.getPublishDay() != null ? a.getPublishDay() : a.getPublishTime().getDayOfMonth())
                         .publishTime(a.getPublishTime())
                         .build())
                 .collect(Collectors.toList());
