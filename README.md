@@ -28,7 +28,7 @@
 - **WebSocket** — 实时在线人数统计
 - **Bucket4j** — 接口限流（令牌桶 + IP/指纹双维度）
 - **CommonMark + Jsoup** — Markdown 解析 + HTML XSS 清洗
-- **Thumbnailator + WebP** — 图片自动压缩
+- **Thumbnailator** — 图片自动压缩 + 缩略图生成
 
 ### 前端
 
@@ -61,6 +61,7 @@
 - 音乐播放器（头部嵌入）
 - 上一篇 / 下一篇导航、相关文章推荐
 - Sitemap 自动生成
+- 光影画廊（相册展示、照片网格浏览、Lightbox 大图查看、跨相册搜索）
 
 ### 管理端 (Frontend-Admin)
 
@@ -70,6 +71,7 @@
 - 评论 / 留言审核管理（批量审核、回复、删除）
 - 友情链接管理
 - 音乐管理（音频上传、歌词关联）
+- 光影画廊管理（相册 CRUD、批量上传照片、照片描述编辑、封面上传）
 - 访客管理（封禁/解封、地理位置分布）
 - 浏览记录查看
 - 数据看板（ECharts 浏览/访客趋势图、省份分布、文章热度 Top10）
@@ -105,23 +107,23 @@ SilentFall_Blog/
 │   │       ├── json/                     # Jackson 序列化配置
 │   │       ├── properties/               # 配置属性类
 │   │       ├── result/                   # 统一返回结果
-│   │       └── utils/                    # 工具类（JWT、IP、图片压缩等）
+│   │       └── utils/                    # 工具类（JWT、IP、图片压缩、Markdown 等）
 │   ├── SilentFall-pojo/                  # 实体/DTO/VO 层
 │   │   └── src/main/java/com/silentfall/blog/
-│   │       ├── dto/                      # 数据传输对象
-│   │       ├── entity/                   # MongoDB 文档实体
-│   │       └── vo/                       # 视图对象
+│   │       ├── dto/                      # 数据传输对象（34 个）
+│   │       ├── entity/                   # MongoDB 文档实体（22 个）
+│   │       └── vo/                       # 视图对象（27 个）
 │   └── SilentFall-server/                # 主服务
 │       └── src/main/
 │           ├── java/com/silentfall/blog/
 │           │   ├── annotation/           # 自定义注解（操作日志、限流）
 │           │   ├── aspect/               # AOP 切面（操作日志、限流）
 │           │   ├── config/               # 配置类（Redis、虚拟线程、WebSocket 等）
-│           │   ├── controller/           # 控制器（admin/blog/cv/home/common）
+│           │   ├── controller/           # 控制器（admin/blog/common/cv/home）
 │           │   ├── handler/              # 全局异常处理
 │           │   ├── interceptor/          # JWT 拦截器
-│           │   ├── repository/           # MongoDB Repository
-│           │   ├── service/              # 业务逻辑层（接口 + impl）
+│           │   ├── repository/           # MongoDB Repository（20 个）
+│           │   ├── service/              # 业务逻辑层（29 个接口 + impl）
 │           │   ├── task/                 # 定时任务（浏览量同步）
 │           │   ├── wesocket/             # WebSocket 在线统计
 │           │   └── SilentFallBlogApplication.java
@@ -132,22 +134,22 @@ SilentFall_Blog/
 │               └── logback-spring.xml    # 日志配置
 ├── Frontend-Blog/                        # 博客前台
 │   └── src/
-│       ├── api/                          # API 请求封装（12 个模块）
+│       ├── api/                          # API 请求封装（14 个模块）
 │       ├── assets/                       # 静态资源（字体/图片/样式/表情）
-│       ├── components/                   # 公共组件（7 个）
+│       ├── components/                   # 公共组件（9 个，含 gallery 子目录）
 │       ├── router/                       # 路由配置（全懒加载）
 │       ├── stores/                       # Pinia 状态管理（blog/theme/visitor）
 │       ├── utils/                        # 工具（请求封装/访客指纹）
-│       └── view/                         # 页面（11 个视图目录）
+│       └── view/                         # 页面（12 个视图目录）
 ├── Frontend-Admin/                       # 管理后台
 │   └── src/
-│       ├── api/                          # API 请求封装（12 个模块）
+│       ├── api/                          # API 请求封装（14 个模块）
 │       ├── assets/                       # 静态资源（字体/样式/表情）
 │       ├── components/                   # 公共组件（EmojiPicker）
 │       ├── router/                       # 路由配置（全懒加载 + 鉴权守卫）
-│       ├── stores/                       # Pinia 状态管理（10 个模块）
+│       ├── stores/                       # Pinia 状态管理（12 个模块）
 │       ├── utils/                        # 工具（请求封装）
-│       └── view/                         # 页面（15 个视图目录）
+│       └── view/                         # 页面（16 个视图目录）
 ├── Screenshot/                           # 项目截图
 ├── docker/                               # Docker 部署配置
 ├── Dockerfile                            # 后端镜像构建
@@ -220,12 +222,12 @@ pnpm dev
 
 ## 本地文件存储
 
-本项目使用**本地磁盘存储**管理上传文件（文章封面、音频等），完全不依赖第三方云存储。
+本项目使用**本地磁盘存储**管理上传文件（文章封面、相册照片、音频等），完全不依赖第三方云存储。
 
 - 上传文件保存在服务器本地目录（默认 `./uploads/`）
 - 通过 Spring Boot 静态资源映射或 Nginx 直接提供访问
-- 文件按类型自动分类存储（image/audio/video/document 等）
-- 图片自动压缩转 WebP 格式（可配置最大体积与质量）
+- 文件按类型自动分类存储（image/thumb/audio/video/document 等）
+- 图片自动压缩并生成缩略图（原图 + 600px 宽缩略图双版本存储）
 
 ---
 
