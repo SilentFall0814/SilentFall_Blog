@@ -130,4 +130,26 @@ public class ImageCompressUtil {
         int dotIndex = filename.lastIndexOf('.');
         return (dotIndex == -1) ? "" : filename.substring(dotIndex + 1);
     }
+
+    /**
+     * 生成缩略图（按指定宽度等比缩放）
+     * @param inputBytes 原图字节数组
+     * @param width 目标宽度（像素），高度按比例自动计算
+     * @param outputFormat 输出格式（如 "webp"、"jpg"）
+     * @return 缩略图字节数组
+     */
+    public byte[] generateThumbnail(byte[] inputBytes, int width, String outputFormat) throws IOException {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(inputBytes);
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+            Thumbnails.of(inputStream)
+                    .width(width)  // 按宽度等比缩放
+                    .imageType(BufferedImage.TYPE_INT_RGB)
+                    .outputFormat(outputFormat)
+                    .outputQuality(0.85)
+                    .toOutputStream(outputStream);
+
+            return outputStream.toByteArray();
+        }
+    }
 }

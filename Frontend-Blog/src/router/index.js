@@ -55,6 +55,18 @@ const router = createRouter({
           name: 'about',
           component: () => import('@/view/About/index.vue'),
           meta: { title: '关于' }
+        },
+        {
+          path: 'gallery',
+          name: 'gallery',
+          component: () => import('@/view/Gallery/index.vue'),
+          meta: { title: '照片墙' }
+        },
+        {
+          path: 'gallery/:id',
+          name: 'galleryDetail',
+          component: () => import('@/view/Gallery/AlbumDetail.vue'),
+          meta: { title: '相册详情' }
         }
       ]
     },

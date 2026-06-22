@@ -88,9 +88,21 @@ const router = createRouter({
         },
         {
           path: '/music',
-          name: 'music',
+          name: 'Music',
           component: () => import('@/view/Music/index.vue'),
           meta: { title: '音乐管理' }
+        },
+        {
+          path: '/gallery',
+          name: 'Gallery',
+          component: () => import('@/view/Gallery/index.vue'),
+          meta: { title: '相册管理' }
+        },
+        {
+          path: '/gallery/photo/:albumId',
+          name: 'GalleryPhotoManage',
+          component: () => import('@/view/Gallery/PhotoManage.vue'),
+          meta: { title: '照片管理' }
         },
         {
           path: '/view-record',

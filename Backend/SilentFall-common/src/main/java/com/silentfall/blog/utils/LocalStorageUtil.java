@@ -25,11 +25,31 @@ public class LocalStorageUtil {
      * @return 文件访问URL
      */
     public String upload(byte[] bytes, String extension, String fileName) {
-        String category = getFileCategory(extension);
-        String objectName = category + "/" + fileName;
+        return upload(bytes, extension, fileName, null);
+    }
 
-        // 构建完整的本地存储路径
-        Path dirPath = Paths.get(basePath, category);
+    /**
+     * 文件上传到本地存储（支持子目录，用于缩略图等分类存放）
+     * @param bytes 文件字节数组
+     * @param extension 文件后缀
+     * @param fileName 文件名
+     * @param subDir 子目录（如 "thumb"），为 null 时按文件类型分类
+     * @return 文件访问URL
+     */
+    public String upload(byte[] bytes, String extension, String fileName, String subDir) {
+        String category = getFileCategory(extension);
+        String objectName;
+        Path dirPath;
+
+        if (subDir != null && !subDir.isEmpty()) {
+            // 缩略图等子目录：image/thumb/xxx.webp
+            objectName = category + "/" + subDir + "/" + fileName;
+            dirPath = Paths.get(basePath, category, subDir);
+        } else {
+            objectName = category + "/" + fileName;
+            dirPath = Paths.get(basePath, category);
+        }
+
         Path filePath = dirPath.resolve(fileName);
 
         try {
@@ -47,6 +67,37 @@ public class LocalStorageUtil {
         log.info("文件上传到: {}", fileUrl);
 
         return fileUrl;
+    }
+
+    /**
+     * 删除本地存储的文件
+     * @param fileUrl 文件访问URL（/uploads/image/xxx.webp）
+     * @return 是否删除成功
+     */
+    public boolean delete(String fileUrl) {
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            return false;
+        }
+        try {
+            // 将URL转换为本地路径
+            String relativePath;
+            if (fileUrl.startsWith(urlPrefix)) {
+                relativePath = fileUrl.substring(urlPrefix.length());
+            } else if (fileUrl.startsWith("/uploads/")) {
+                relativePath = fileUrl.substring("/uploads/".length() - 1);
+            } else {
+                return false;
+            }
+            // 去掉开头的斜杠
+            if (relativePath.startsWith("/")) {
+                relativePath = relativePath.substring(1);
+            }
+            Path filePath = Paths.get(basePath, relativePath);
+            return Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            log.error("文件删除失败: {}, 错误: {}", fileUrl, e.getMessage());
+            return false;
+        }
     }
 
     /**

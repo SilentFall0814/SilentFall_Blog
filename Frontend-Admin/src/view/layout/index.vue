@@ -31,6 +31,7 @@ const navItems = [
   { path: '/message', icon: 'icon-liuyan', label: '留言管理' },
   { path: '/friend-link', icon: 'icon-link', label: '友链管理' },
   { path: '/music', icon: 'icon-music', label: '音乐管理' },
+  { path: '/gallery', icon: 'icon-folder', label: '光影画廊' },
   { path: '/visitor', icon: 'icon-user', label: '访客管理' },
   { path: '/view-record', icon: 'icon-eye', label: '浏览记录' },
   { path: '/operation-log', icon: 'icon-wj-rz', label: '操作日志' },

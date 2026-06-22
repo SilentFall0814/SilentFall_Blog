@@ -82,6 +82,7 @@ const toggleMobileMusic = () => {
 const navItems = [
   { label: '博客', icon: 'icon-boke', to: '/' },
   { label: '归档', icon: 'icon-guidang', to: '/archive' },
+  { label: '画廊', icon: 'icon-folder', to: '/gallery' },
   { label: '友链', icon: 'icon-lianjie', to: '/links' },
   { label: '留言', icon: 'icon-liuyan', to: '/message' },
   { label: '关于', icon: 'icon-guanyu', to: '/about' }

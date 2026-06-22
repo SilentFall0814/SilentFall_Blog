@@ -125,6 +125,11 @@ public class RedisConfiguration {
         // Sitemap：缓存30分钟
         cacheConfigurations.put("sitemap", defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
+        // 光影画廊：相册列表缓存1小时，相册详情和照片列表缓存30分钟
+        cacheConfigurations.put("albumList", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigurations.put("albumDetail", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("photoList", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigurations)
