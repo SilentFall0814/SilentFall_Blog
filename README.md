@@ -62,6 +62,7 @@
 - 上一篇 / 下一篇导航、相关文章推荐
 - Sitemap 自动生成
 - 光影画廊（相册展示、照片网格浏览、Lightbox 大图查看、跨相册搜索）
+- 公告栏（侧边栏卡片展示生效公告，无公告时自动隐藏）
 
 ### 管理端 (Frontend-Admin)
 
@@ -70,6 +71,7 @@
 - 分类与标签管理
 - 评论 / 留言审核管理（批量审核、回复、删除）
 - 友情链接管理
+- 公告管理（文本公告发布、列表展示、删除）
 - 音乐管理（音频上传、歌词关联）
 - 光影画廊管理（相册 CRUD、批量上传照片、照片描述编辑、封面上传）
 - 访客管理（封禁/解封、地理位置分布）
@@ -110,9 +112,9 @@ SilentFall_Blog/
 │   │       └── utils/                    # 工具类（JWT、IP、图片压缩、Markdown 等）
 │   ├── SilentFall-pojo/                  # 实体/DTO/VO 层
 │   │   └── src/main/java/com/silentfall/blog/
-│   │       ├── dto/                      # 数据传输对象（34 个）
-│   │       ├── entity/                   # MongoDB 文档实体（22 个）
-│   │       └── vo/                       # 视图对象（27 个）
+│   │       ├── dto/                      # 数据传输对象（37 个）
+│   │       ├── entity/                   # MongoDB 文档实体（21 个）
+│   │       └── vo/                       # 视图对象（28 个）
 │   └── SilentFall-server/                # 主服务
 │       └── src/main/
 │           ├── java/com/silentfall/blog/
@@ -122,8 +124,8 @@ SilentFall_Blog/
 │           │   ├── controller/           # 控制器（admin/blog/common/cv/home）
 │           │   ├── handler/              # 全局异常处理
 │           │   ├── interceptor/          # JWT 拦截器
-│           │   ├── repository/           # MongoDB Repository（20 个）
-│           │   ├── service/              # 业务逻辑层（29 个接口 + impl）
+│           │   ├── repository/           # MongoDB Repository（21 个）
+│           │   ├── service/              # 业务逻辑层（32 个接口 + impl）
 │           │   ├── task/                 # 定时任务（浏览量同步）
 │           │   ├── wesocket/             # WebSocket 在线统计
 │           │   └── SilentFallBlogApplication.java
@@ -134,7 +136,7 @@ SilentFall_Blog/
 │               └── logback-spring.xml    # 日志配置
 ├── Frontend-Blog/                        # 博客前台
 │   └── src/
-│       ├── api/                          # API 请求封装（14 个模块）
+│       ├── api/                          # API 请求封装（15 个模块）
 │       ├── assets/                       # 静态资源（字体/图片/样式/表情）
 │       ├── components/                   # 公共组件（9 个，含 gallery 子目录）
 │       ├── router/                       # 路由配置（全懒加载）
@@ -143,13 +145,13 @@ SilentFall_Blog/
 │       └── view/                         # 页面（12 个视图目录）
 ├── Frontend-Admin/                       # 管理后台
 │   └── src/
-│       ├── api/                          # API 请求封装（14 个模块）
+│       ├── api/                          # API 请求封装（15 个模块）
 │       ├── assets/                       # 静态资源（字体/样式/表情）
 │       ├── components/                   # 公共组件（EmojiPicker）
 │       ├── router/                       # 路由配置（全懒加载 + 鉴权守卫）
 │       ├── stores/                       # Pinia 状态管理（12 个模块）
 │       ├── utils/                        # 工具（请求封装）
-│       └── view/                         # 页面（16 个视图目录）
+│       └── view/                         # 页面（19 个视图目录）
 ├── Screenshot/                           # 项目截图
 ├── docker/                               # Docker 部署配置
 ├── Dockerfile                            # 后端镜像构建

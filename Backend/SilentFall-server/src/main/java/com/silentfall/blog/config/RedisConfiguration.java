@@ -103,6 +103,8 @@ public class RedisConfiguration {
         cacheConfigurations.put("skills", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("experiences", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("friendLinks", defaultConfig.entryTtl(Duration.ofHours(1)));
+        // 公告：变化频率低，缓存1小时
+        cacheConfigurations.put("announcements", defaultConfig.entryTtl(Duration.ofHours(1)));
 
         // 文章相关：适中变化频率，缓存30分钟
         cacheConfigurations.put("articleCategories", defaultConfig.entryTtl(Duration.ofMinutes(30)));

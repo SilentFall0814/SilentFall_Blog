@@ -2,10 +2,20 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBlogStore, useVisitorStore } from '@/stores'
+import { getActiveAnnouncements } from '@/api/announcement'
 
 const router = useRouter()
 const blogStore = useBlogStore()
 const visitorStore = useVisitorStore()
+
+/* 公告 */
+const announcements = ref([])
+
+/* 格式化日期为 YYYY-MM-DD */
+const formatDate = (val) => {
+  if (!val) return ''
+  return String(val).slice(0, 10)
+}
 
 /* 分类/标签弹窗 */
 const showCatModal = ref(false)
@@ -59,6 +69,17 @@ const connectWs = () => {
 onMounted(() => {
   connectWs()
 })
+
+/* 获取生效的公告 */
+onMounted(async () => {
+  try {
+    const res = await getActiveAnnouncements()
+    announcements.value = res.data.data ?? []
+  } catch {
+    announcements.value = []
+  }
+})
+
 onUnmounted(() => {
   unmounted = true
   if (reconnectTimer) {
@@ -174,6 +195,17 @@ const goTag = (slug) => {
           <span class="sk-social-icon" v-for="i in 3" :key="i" />
         </div>
       </template>
+    </div>
+
+    <!-- 公告栏卡片 -->
+    <div v-if="announcements.length" class="side-card announcement-card">
+      <h4 class="card-title"><i class="iconfont icon-biaoqian" /> 公告</h4>
+      <div class="ann-list">
+        <div v-for="item in announcements" :key="item.id" class="ann-item">
+          <div class="ann-date">{{ formatDate(item.createdAt) }}</div>
+          <div class="ann-content">{{ item.content }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- 站点统计卡片 -->
@@ -412,6 +444,32 @@ const goTag = (slug) => {
   font-weight: 600;
   color: #303133;
   font-family: var(--blog-serif);
+}
+
+/* 公告栏 */
+.announcement-card .ann-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.ann-item {
+  padding: 8px 0;
+  border-bottom: 1px dashed #ebeef5;
+}
+.ann-item:last-child {
+  border-bottom: none;
+}
+.ann-date {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+  font-family: var(--blog-serif);
+}
+.ann-content {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.6;
+  word-break: break-all;
+  white-space: pre-wrap;
 }
 
 /* 弹窗内容 */

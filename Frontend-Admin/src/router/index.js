@@ -63,6 +63,12 @@ const router = createRouter({
           meta: { title: '友链管理' }
         },
         {
+          path: '/announcement',
+          name: 'announcement',
+          component: () => import('@/view/Announcement/index.vue'),
+          meta: { title: '公告管理' }
+        },
+        {
           path: '/message',
           name: 'message',
           component: () => import('@/view/Message/index.vue'),
