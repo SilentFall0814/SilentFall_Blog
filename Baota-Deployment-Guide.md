@@ -144,25 +144,23 @@ Frontend-Admin/dist/      ← 管理后台静态文件
 
 ```
 /www/wwwroot/
-├── silentfall/
-│   ├── backend/          ← 存放后端 jar 包
-│   └── uploads/          ← 存放上传的文件（自动生成）
-├── blog.silentfall.blog/ ← 存放博客前台静态文件
-└── admin.silentfall.blog/← 存放管理后台静态文件
+└── SilentFall_Blog/
+    ├── backend/          ← 存放后端 jar 包
+    ├── uploads/          ← 存放上传的文件（自动生成）
+    ├── Blog-Pages/       ← 存放博客前台静态文件
+    └── Admin-Pages/      ← 存放管理后台静态文件
 ```
 
 操作步骤：
 
-1. 在 `/www/wwwroot/` 下新建文件夹 `silentfall`，进入后再新建 `backend` 和 `uploads` 两个子文件夹
-2. 将本地的 `SilentFall-server-1.0-SNAPSHOT.jar` 上传到 `/www/wwwroot/silentfall/backend/`
-3. 在 `/www/wwwroot/` 下新建文件夹 `blog.silentfall.blog`
-4. 将 `blog-dist.zip` 上传到 `blog.silentfall.blog/` 并右键解压，确保 `index.html` 直接在该目录下
-5. 在 `/www/wwwroot/` 下新建文件夹 `admin.silentfall.blog`
-6. 将 `admin-dist.zip` 上传到 `admin.silentfall.blog/` 并右键解压，确保 `index.html` 直接在该目录下
+1. 在 `/www/wwwroot/` 下新建文件夹 `SilentFall_Blog`，进入后再新建 `backend`、`uploads`、`Blog-Pages`、`Admin-Pages` 四个子文件夹
+2. 将本地的 `SilentFall-server-1.0-SNAPSHOT.jar` 上传到 `/www/wwwroot/SilentFall_Blog/backend/`
+3. 将 `blog-dist.zip` 上传到 `/www/wwwroot/SilentFall_Blog/Blog-Pages/` 并右键解压，确保 `index.html` 直接在该目录下
+4. 将 `admin-dist.zip` 上传到 `/www/wwwroot/SilentFall_Blog/Admin-Pages/` 并右键解压，确保 `index.html` 直接在该目录下
 
 ### 3.4 创建后端配置文件
 
-在宝塔文件管理器中，进入 `/www/wwwroot/silentfall/backend/`，新建文件 `application-prod.yml`，写入以下内容（无需修改，直接复制）：
+在宝塔文件管理器中，进入 `/www/wwwroot/SilentFall_Blog/backend/`，新建文件 `application-prod.yml`，写入以下内容（无需修改，直接复制）：
 
 ```yaml
 silentfall:
@@ -176,16 +174,19 @@ silentfall:
   jwt:
     ttl: 604800000
   local-storage:
-    base-path: /www/wwwroot/silentfall/uploads
+    base-path: /www/wwwroot/SilentFall_Blog/uploads
     url-prefix: /uploads
+  # 访客验证码（主配置模板中存在该占位符，必须提供否则启动报错；当前代码暂未使用，任意值即可）
+  visitor:
+    verify-code: silentfall
   website:
     title: SilentFall
-    home: https://blog.silentfall.blog
-    admin: https://admin.silentfall.blog
-    blog: https://blog.silentfall.blog
+    home: https://blog.ljb666.xyz
+    admin: https://admin.ljb666.xyz
+    blog: https://blog.ljb666.xyz
 ```
 
-> 说明：`base-path` 指向步骤 3.3 创建的 uploads 目录，`website` 下的域名对应后续创建的站点域名。如果你的域名不同，将 `blog.silentfall.blog` 和 `admin.silentfall.blog` 替换为你的实际域名即可。
+> 说明：`base-path` 指向步骤 3.3 创建的 uploads 目录，`website` 下的域名对应后续创建的站点域名。如果你的域名不同，将 `blog.ljb666.xyz` 和 `admin.ljb666.xyz` 替换为你的实际域名即可。
 
 ---
 
@@ -194,24 +195,24 @@ silentfall:
 ### 4.1 创建博客前台站点
 
 1. 宝塔面板左侧点击 **「网站」** → **「添加站点」**
-2. 域名填写：`blog.silentfall.blog`
-3. 根目录选择：`/www/wwwroot/blog.silentfall.blog`
+2. 域名填写：`blog.ljb666.xyz`
+3. 根目录选择：`/www/wwwroot/SilentFall_Blog/Blog-Pages`
 4. PHP版本选择：**纯静态**
 5. 点击「提交」
 
 ### 4.2 创建管理后台站点
 
-重复上述步骤，域名填 `admin.silentfall.blog`，根目录选 `/www/wwwroot/admin.silentfall.blog`。
+重复上述步骤，域名填 `admin.ljb666.xyz`，根目录选 `/www/wwwroot/SilentFall_Blog/Admin-Pages`。
 
 ### 4.3 配置博客前台 Nginx
 
-在网站列表找到 `blog.silentfall.blog`，点击「设置」→「配置文件」，将整个配置文件内容替换为以下内容（直接复制粘贴）：
+在网站列表找到 `blog.ljb666.xyz`，点击「设置」→「配置文件」，将整个配置文件内容替换为以下内容（直接复制粘贴）：
 
 ```nginx
 server {
     listen 80;
-    server_name blog.silentfall.blog;
-    root /www/wwwroot/blog.silentfall.blog;
+    server_name blog.ljb666.xyz;
+    root /www/wwwroot/SilentFall_Blog/Blog-Pages;
     index index.html;
 
     # 前端路由 history 模式支持
@@ -232,7 +233,7 @@ server {
 
     # 上传文件静态资源（Nginx 直接托管，性能更好）
     location /uploads/ {
-        alias /www/wwwroot/silentfall/uploads/;
+        alias /www/wwwroot/SilentFall_Blog/uploads/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
@@ -252,8 +253,8 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    access_log /www/wwwlogs/blog.silentfall.blog.log;
-    error_log /www/wwwlogs/blog.silentfall.blog.error.log;
+    access_log /www/wwwlogs/blog.ljb666.xyz.log;
+    error_log /www/wwwlogs/blog.ljb666.xyz.error.log;
 }
 ```
 
@@ -261,13 +262,13 @@ server {
 
 ### 4.4 配置管理后台 Nginx
 
-在网站列表找到 `admin.silentfall.blog`，点击「设置」→「配置文件」，替换为以下内容：
+在网站列表找到 `admin.ljb666.xyz`，点击「设置」→「配置文件」，替换为以下内容：
 
 ```nginx
 server {
     listen 80;
-    server_name admin.silentfall.blog;
-    root /www/wwwroot/admin.silentfall.blog;
+    server_name admin.ljb666.xyz;
+    root /www/wwwroot/SilentFall_Blog/Admin-Pages;
     index index.html;
 
     # 前端路由 history 模式支持
@@ -276,6 +277,33 @@ server {
     }
 
     # 后端 API 反向代理（使用 ^~ 提升匹配优先级，避免被下方的静态资源正则规则拦截 /api/uploads/ 等路径）
+    # 上传接口单独配置长超时，避免大文件/批量上传时 Nginx 先于后端返回 504
+    location ^~ /api/admin/common/upload {
+        proxy_pass http://127.0.0.1:5922/admin/common/upload;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 500m;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 600s;
+        proxy_read_timeout 600s;
+        proxy_buffering off;
+    }
+
+    location ^~ /api/admin/photo/batch {
+        proxy_pass http://127.0.0.1:5922/admin/photo/batch;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 500m;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 600s;
+        proxy_read_timeout 600s;
+        proxy_buffering off;
+    }
+
     location ^~ /api/ {
         proxy_pass http://127.0.0.1:5922/;
         proxy_set_header Host $host;
@@ -283,18 +311,21 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         # 上传文件大小限制（与后端一致）
-        client_max_body_size 120m;
+        client_max_body_size 500m;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
     # 上传文件静态资源
     location /uploads/ {
-        alias /www/wwwroot/silentfall/uploads/;
+        alias /www/wwwroot/SilentFall_Blog/uploads/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
 
-    access_log /www/wwwlogs/admin.silentfall.blog.log;
-    error_log /www/wwwlogs/admin.silentfall.blog.error.log;
+    access_log /www/wwwlogs/admin.ljb666.xyz.log;
+    error_log /www/wwwlogs/admin.ljb666.xyz.error.log;
 }
 ```
 
@@ -320,8 +351,10 @@ server {
 2. 切换到 **「模块管理」** 标签页
 3. 点击 **「添加项目」**，填写以下信息：
    - **项目名称**：`silentfall-backend`
-   - **运行目录**：`/www/wwwroot/silentfall/backend`
-   - **启动文件/命令**：`java -jar SilentFall-server-1.0-SNAPSHOT.jar --spring.profiles.active=prod`
+   - **运行目录**：`/www/wwwroot/SilentFall_Blog/backend`
+   - **启动文件/命令**：`java -Xmx512m -jar SilentFall-server-1.0-SNAPSHOT.jar --spring.profiles.active=prod`
+
+   > **重要**：`-Xmx512m` 指定 JVM 最大堆内存为 512MB。图片上传压缩时需要将图片解码为 BufferedImage 占用较多内存，不指定堆内存会导致默认值过小（通常 256MB），上传多张大图时触发 `OutOfMemoryError: Java heap space`。如服务器内存充裕可调大到 `-Xmx1g`。
    - **Node版本**：任意（此项目用 Java 运行，Node 版本不影响）
 4. 点击「提交」
 
@@ -335,7 +368,7 @@ PM2 会自动守护进程，服务器重启后也会自动启动。
 curl http://127.0.0.1:5922/health
 ```
 
-如果返回类似 `{"code":1,"msg":"success","data":"ok"}` 的 JSON，说明后端启动成功。
+如果返回类似 `{"code":1,"data":"Server is running"}` 的 JSON，说明后端启动成功。
 
 如果返回连接失败，查看启动日志：
 
@@ -357,7 +390,7 @@ pm2 logs silentfall-backend --lines 50
 | 用户名 | `SilentFall` |
 | 密码 | `LJBljb0814` |
 
-打开浏览器访问 `https://admin.silentfall.blog`（替换为你的域名），使用上述账号登录。**登录后请立即在「个人资料」页面修改密码。**
+打开浏览器访问 `https://admin.ljb666.xyz`（替换为你的域名），使用上述账号登录。**登录后请立即在「个人资料」页面修改密码。**
 
 ---
 
@@ -370,9 +403,9 @@ pm2 logs silentfall-backend --lines 50
 | A | blog | 你的服务器公网 IP |
 | A | admin | 你的服务器公网 IP |
 
-例如域名为 `silentfall.blog`，则添加：
-- `blog.silentfall.blog` → 服务器 IP
-- `admin.silentfall.blog` → 服务器 IP
+例如域名为 `ljb666.xyz`，则添加：
+- `blog.ljb666.xyz` → 服务器 IP
+- `admin.ljb666.xyz` → 服务器 IP
 
 解析生效后（通常几分钟到几小时），即可通过域名访问博客。
 
@@ -392,7 +425,7 @@ cd Backend
 mvn clean package -DskipTests
 
 # 上传新的 SilentFall-server-1.0-SNAPSHOT.jar 到
-# /www/wwwroot/silentfall/backend/
+# /www/wwwroot/SilentFall_Blog/backend/
 ```
 
 然后在 PM2 管理器中点击 `silentfall-backend` 项目的「重启」按钮。
@@ -405,8 +438,8 @@ cd Frontend-Blog && pnpm build
 cd ../Frontend-Admin && pnpm build
 
 # 将 dist 目录内容上传覆盖到对应站点目录
-# /www/wwwroot/blog.silentfall.blog/
-# /www/wwwroot/admin.silentfall.blog/
+# /www/wwwroot/SilentFall_Blog/Blog-Pages/
+# /www/wwwroot/SilentFall_Blog/Admin-Pages/
 ```
 
 ### 7.2 查看日志
@@ -416,10 +449,10 @@ cd ../Frontend-Admin && pnpm build
 pm2 logs silentfall-backend
 
 # Nginx 访问日志
-tail -f /www/wwwlogs/blog.silentfall.blog.log
+tail -f /www/wwwlogs/blog.ljb666.xyz.log
 
 # Nginx 错误日志
-tail -f /www/wwwlogs/blog.silentfall.blog.error.log
+tail -f /www/wwwlogs/blog.ljb666.xyz.error.log
 ```
 
 ### 7.3 备份数据
@@ -433,7 +466,7 @@ mongodump --db silentfall --out /www/backup/mongodb-$(date +%Y%m%d)
 
 **备份上传文件：**
 
-在宝塔文件管理器中，将 `/www/wwwroot/silentfall/uploads/` 目录压缩下载保存。
+在宝塔文件管理器中，将 `/www/wwwroot/SilentFall_Blog/uploads/` 目录压缩下载保存。
 
 建议在宝塔面板的 **「计划任务」** 中添加定时备份，每天自动执行 MongoDB 导出。
 
@@ -455,8 +488,8 @@ mongodump --db silentfall --out /www/backup/mongodb-$(date +%Y%m%d)
 
 部署完成后，逐项确认以下功能正常：
 
-- [ ] 访问 `https://blog.silentfall.blog` 能看到博客首页
-- [ ] 访问 `https://admin.silentfall.blog` 能看到管理后台登录页
+- [ ] 访问 `https://blog.ljb666.xyz` 能看到博客首页
+- [ ] 访问 `https://admin.ljb666.xyz` 能看到管理后台登录页
 - [ ] 使用默认账号能登录管理后台
 - [ ] 在管理后台发布一篇文章，博客前台能看到
 - [ ] 在博客前台评论一篇文章，管理后台能看到待审核评论

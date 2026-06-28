@@ -17,7 +17,7 @@
     "preview": "vite preview",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write src/",
-    "prepare": "husky install",
+    "prepare": "node -e \"require('fs').existsSync('.git')&&require('child_process').execSync('husky install',{stdio:'inherit'})\"",
     "lint-staged": "lint-staged"
   },
   "dependencies": {

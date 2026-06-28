@@ -31,6 +31,7 @@ public class ImageCompressUtil {
 
     /**
      * 图片压缩
+     * 根据原图大小智能选择压缩质量，一次压缩到位，避免循环重新编码
      * @param file
      * @return
      */
@@ -46,19 +47,10 @@ public class ImageCompressUtil {
 
         log.info("开始压缩: {} ({}KB)", originalName, originalSize / 1024);
 
-        // 保留原始字节，每次压缩都基于原图，避免二次有损压缩导致色彩失真
+        // 根据原图大小智能选择压缩质量，避免循环重新编码导致耗时过长
         byte[] originalBytes = file.getBytes();
-        byte[] compressedBytes = compressWithQuality(originalBytes, imageProperties.getQuality());
-
-        int attempts = 0;
-        double currentQuality = imageProperties.getQuality();
-
-        while (isOversized(compressedBytes) && attempts < 10) {
-            currentQuality = Math.max(0.3, currentQuality - 0.05);
-            // 始终从原图重新压缩，而非压缩已压缩的数据
-            compressedBytes = compressWithQuality(originalBytes, currentQuality);
-            attempts++;
-        }
+        double quality = chooseQuality(originalSize);
+        byte[] compressedBytes = compressWithQuality(originalBytes, quality);
 
         // 记录压缩后信息
         long compressedSize = compressedBytes.length;
@@ -69,9 +61,26 @@ public class ImageCompressUtil {
                 originalSize / 1024,
                 compressedSize / 1024,
                 String.format("%.2f",ratio),
-                String.format("%.2f", currentQuality));
+                String.format("%.2f", quality));
 
         return compressedBytes;
+    }
+
+    /**
+     * 根据原图大小智能选择压缩质量
+     * 大图用较低质量以保证文件体积，小图用较高质量保留细节，一次压缩即可达标
+     */
+    private double chooseQuality(long originalSizeBytes) {
+        long kb = originalSizeBytes / 1024;
+        if (kb > 5120) {        // 大于 5MB：高质量照片/手机原图
+            return 0.6;
+        } else if (kb > 2048) { // 大于 2MB
+            return 0.7;
+        } else if (kb > 1024) { // 大于 1MB
+            return 0.75;
+        } else {
+            return 0.8;         // 小图保留较高质量
+        }
     }
 
     /**

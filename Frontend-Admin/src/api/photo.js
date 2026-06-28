@@ -11,7 +11,8 @@ export const getPhoto = (id) => request.get(`/admin/photo/${id}`)
  */
 export const batchUploadPhoto = (formData) =>
   request.post('/admin/photo/batch', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    // 不手动设置 Content-Type，让浏览器自动添加 multipart/form-data 及 boundary
+    timeout: 600000
   })
 
 /** 更新照片（修改描述/排序） */

@@ -20,8 +20,10 @@ spring:
     allow-circular-references: true
   servlet:
     multipart:
-      max-file-size: 30MB
-      max-request-size: 50MB
+      # 单文件最大 100MB（支持高分辨率照片、音频文件）
+      max-file-size: 100MB
+      # 单次请求最大 500MB（支持批量上传多张照片）
+      max-request-size: 500MB
   # MongoDB配置
   data:
     mongodb:
@@ -45,7 +47,8 @@ silentfall:
   image:
     compress:
       enabled: ${IMAGE_COMPRESS_ENABLED:true}
-      max-size-kb: ${IMAGE_COMPRESS_MAX_SIZE:500}
+      # 超过 1MB 的图片才进行压缩，避免对小图做不必要的处理
+      max-size-kb: ${IMAGE_COMPRESS_MAX_SIZE:1024}
       quality: ${IMAGE_COMPRESS_QUALITY:0.9}
       output-format: webp
   website:

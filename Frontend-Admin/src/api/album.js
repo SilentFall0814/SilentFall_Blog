@@ -19,5 +19,6 @@ export const deleteAlbum = (ids) =>
 /** 图片上传（同时生成缩略图） */
 export const uploadImageWithThumb = (formData) =>
   request.post('/admin/common/uploadImage', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    // 不手动设置 Content-Type，让浏览器自动添加 multipart/form-data 及 boundary
+    timeout: 600000
   })
